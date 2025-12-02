@@ -1,0 +1,28 @@
+services:
+  arcane:
+    image: ghcr.io/getarcaneapp/arcane:v1.9.0
+    container_name: arcane
+    env_file:
+      - .env
+      - /mnt/zpool/Docker/Secrets/arcane.env
+    ports:
+      - "192.168.40.6:30258:30258"  # Keep for backward compatibility
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /mnt/zpool/Docker/Stacks/arcane:/app/data
+      - /mnt/zpool/Docker/Projects:/app/data/projects
+      - /mnt/zpool/Docker/Stacks:/app/data/stacks
+    networks:
+      - backend_storage
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=backend_storage"
+      - "traefik.http.routers.arcane.rule=Host(`arcane.a0a0.org`)"
+      - "traefik.http.routers.arcane.entrypoints=websecure"
+      - "traefik.http.routers.arcane.tls.certresolver=letsencrypt"
+      - "traefik.http.services.arcane.loadbalancer.server.port=30258"
+    restart: unless-stopped
+
+networks:
+  backend_storage:
+    external: true

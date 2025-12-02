@@ -1,0 +1,33 @@
+version: '3.9'
+
+networks:
+  backend_media:
+    external: true  # Tell Docker this network already exists
+
+services:
+  jellyfin:
+    image: 'jellyfin/jellyfin:latest'
+    restart: unless-stopped
+    container_name: jellyfin
+    networks:
+      - backend_media
+    volumes:
+      - /mnt/zpool/Docker/Stacks/jellyfin/config:/config
+      - /mnt/zpool/Docker/Stacks/jellyfin/cache:/cache
+      - /mnt/zpool/Media/Movies:/jellyfin-movies
+      - /mnt/zpool/Media/Music:/jellyfin-music
+      - /mnt/zpool/Media/Series:/jellyfin-series
+      - /mnt/zpool/Media/Music-Lessons:/jellyfin/music-lessons
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - PUID=568
+      - PGID=568
+      - TZ=America/Chicago
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=backend_media"
+      - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.a0a0.org`)"
+      - "traefik.http.routers.jellyfin.entrypoints=websecure"
+      - "traefik.http.routers.jellyfin.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.jellyfin.service=jellyfin"
+      - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"

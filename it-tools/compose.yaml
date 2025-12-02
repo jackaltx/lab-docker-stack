@@ -1,0 +1,23 @@
+version: '3.9'
+
+networks:
+  backend_storage:
+    external: true  # Tell Docker this network already exists
+
+services:
+    it-tools:
+        image: 'corentinth/it-tools:latest'
+        #ports:
+        #    - '8080:80'
+        restart: unless-stopped
+        container_name: it-tools
+        networks:
+          - backend_storage
+        labels:
+          - "traefik.enable=true"
+          - "traefik.docker.network=backend_storage"
+          - "traefik.http.routers.it-tools.rule=Host(`it-tools.a0a0.org`)"
+          - "traefik.http.routers.it-tools.entrypoints=websecure"
+          - "traefik.http.routers.it-tools.tls.certresolver=letsencrypt"
+          - "traefik.http.routers.it-tools.service=it-tools"
+          - "traefik.http.services.it-tools.loadbalancer.server.port=80"

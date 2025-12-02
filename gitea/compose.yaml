@@ -1,0 +1,35 @@
+services:
+  gitea:
+    image: gitea/gitea:latest
+    container_name: gitea
+    environment:
+      - USER_UID=${PUID}
+      - USER_GID=${PGID}
+      - TZ=${TZ}
+      - GITEA__database__DB_TYPE=sqlite3
+      - GITEA__server__DOMAIN=gitea.a0a0.org
+      - GITEA__server__SSH_DOMAIN=gitea.a0a0.org
+      - GITEA__server__ROOT_URL=https://gitea.a0a0.org
+    volumes:
+      - /mnt/zpool/Docker/Stacks/gitea:/data
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "192.168.40.6:2222:22"  # SSH on 2222 to avoid conflict with host SSH
+    networks:
+      - backend_storage
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=backend_storage"
+      # Web UI
+      - "traefik.http.routers.gitea.rule=Host(`gitea.a0a0.org`)"
+      - "traefik.http.routers.gitea.entrypoints=websecure"
+      - "traefik.http.routers.gitea.tls.certresolver=letsencrypt"
+      - "traefik.http.services.gitea.loadbalancer.server.port=3000"
+    restart: unless-stopped
+
+networks:
+  backend_storage:
+    external: true
+
+# URL: https://gitea.a0a0.org
+# SSH: gitea.a0a0.org:2222

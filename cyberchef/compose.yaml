@@ -1,0 +1,21 @@
+version: '3.9'
+
+networks:
+  backend_storage:
+    external: true  # Tell Docker this network already exists
+
+services:
+  cyberchef:
+    image: 'mpepping/cyberchef:latest'
+    restart: unless-stopped
+    container_name: cyberchef
+    networks:
+      - backend_storage
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=backend_storage"
+      - "traefik.http.routers.cyberchef.rule=Host(`cyberchef.a0a0.org`)"
+      - "traefik.http.routers.cyberchef.entrypoints=websecure"
+      - "traefik.http.routers.cyberchef.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.cyberchef.service=cyberchef"
+      - "traefik.http.services.cyberchef.loadbalancer.server.port=8000"

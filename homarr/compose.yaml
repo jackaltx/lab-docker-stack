@@ -1,0 +1,34 @@
+version: "3"
+
+networks:
+  backend_media:
+    external: true
+
+services:
+  #
+  # ==================================================================================
+  # Homarr: Modern dashboard for your self-hosted services
+  # https://homarr.dev/
+  #
+  homarr:
+    image: ghcr.io/homarr-labs/homarr:latest
+    container_name: homarr
+    restart: unless-stopped
+    networks:
+      - backend_media
+    env_file:
+      - .env
+      - /mnt/zpool/Docker/Secrets/homarr.env
+#    environment:
+#      - 'SECRET_ENCRYPTION_KEY=${SECRET_ENCRYPTION_KEY}'  # Loaded via env_file instead
+    volumes:
+      - '/etc/localtime:/etc/localtime:ro'
+      - '/mnt/zpool/Docker/Stacks/homarr:/appdata'
+      - '/var/run/docker.sock:/var/run/docker.sock:ro'  # Optional - for Docker integration
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=backend_media"
+      - "traefik.http.routers.homarr.rule=Host(`home.a0a0.org`)"
+      - "traefik.http.routers.homarr.entrypoints=websecure"
+      - "traefik.http.routers.homarr.tls.certresolver=letsencrypt"
+      - "traefik.http.services.homarr.loadbalancer.server.port=7575"

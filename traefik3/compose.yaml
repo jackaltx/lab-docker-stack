@@ -1,0 +1,45 @@
+version: '3.8'
+
+networks:
+  backend_storage:
+    external: true
+
+  backend_media:
+    external: true
+
+  traefik_public:  # Create a bridge network with internet access
+    driver: bridge
+
+services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    restart: unless-stopped
+    networks:
+      - backend_storage
+      - backend_media
+      - traefik_public
+    ports:
+      - "192.168.40.6:80:8080"  # Host 8080 → Container 8080 (dashboard)
+      - "192.168.40.6:443:443"   # Host 8443 → Container 443 (HTTPS services)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /mnt/zpool/Docker/Stacks/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - /mnt/zpool/Docker/Stacks/traefik/acme:/acme
+      - /mnt/zpool/Docker/Stacks/traefik/access.log:/var/log/traefik/access.log
+      - /etc/localtime:/etc/localtime:ro
+    env_file:
+      - .env
+      - /mnt/zpool/Docker/Secrets/traefik.env
+#    environment:
+#      - LINODE_TOKEN=${LINODE_TOKEN}
+    labels:
+      - "traefik.enable=true"
+      # Dashboard
+      - "traefik.http.routers.dashboard.rule=Host(`docker.a0a0.org`)" 
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.dashboard.middlewares=auth"
+      # Basic auth
+      - "traefik.http.middlewares.auth.basicauth.users=${USER_PASSWD}"
