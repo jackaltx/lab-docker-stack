@@ -1,12 +1,22 @@
 # TrueNAS Docker Lab Stack
 
-> **⚠️ IN PROGRESS** - Active development environment
+> **⚠️ EXPERIMENTAL - VERY EARLY STAGE**
+>
+> This is a development experiment, not production-ready software. Do not use without deep thought. Not suitable for internet-facing deployments.
 
-Self-hosted Docker infrastructure running on TrueNAS Scale, bypassing the built-in Apps system for maximum control and portability.
+> **USE AT YOUR RISK, PRACTICE SAFE HEX!**
+
+Self-hosted Docker infrastructure developed on TrueNAS Scale (should work on any Debian distro - TBD), bypassing the built-in Apps system for maximum control and portability.
 
 ## Overview
 
 This repository contains Docker Compose configurations for a complete self-hosted media and infrastructure stack. Developed directly on TrueNAS using standard Docker Compose, managed through [Arcane](https://github.com/getarcaneapp/arcane) for GUI control.
+
+### AI-Assisted Development Experiment
+
+The real feature here is the development methodology: using Claude Code to create, update, and test on a remote system. This is an experiment in "vibe coding" - setting goals and expectations, then collaborating with AI to realize concepts through documentation and implementation.
+
+This repository is part of a larger project called **[SOLTI](https://github.com/jackaltx/solti-dev)** (AI co-developed)
 
 **Why bypass TrueNAS Apps?**
 - Full control over compose files and configurations
