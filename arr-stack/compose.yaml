@@ -1,5 +1,4 @@
-version: "3"
-
+---
 networks:
   backend_media:
     external: true
@@ -40,23 +39,21 @@ services:
       - '/etc/localtime:/etc/localtime:ro'
       - '/mnt/zpool/Docker/Stacks/arr-stack/gluetun:/gluetun'
     env_file:
-      - .env
       - /mnt/zpool/Docker/Secrets/arr-stack.env
     environment:
       - 'TZ=${TZ}'
       - VPN_SERVICE_PROVIDER=private internet access
       - VPN_TYPE=openvpn
-      - 'OPENVPN_USER=${OPENVPN_USER}'
-      - 'OPENVPN_PASSWORD=${OPENVPN_PASSWORD}'
       - UPDATER_PERIOD=24h
       # https://forums.truenas.com/t/guide-to-installing-transmission-with-pia-and-port-forwarding-on-truenas-24-10-electriceel-and-later/22664
       - PORT_FORWARD_ONLY=true
       - VPN_PORT_FORWARDING=on
       - SERVER_HOSTNAMES=italy-2.privacy.network,italy.privacy.network
+      - DNS_ADDRESS=8.8.8.8  # Google DNS - avoids Cloudflare blocks
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
-      - "traefik.http.routers.qbittorrent.rule=Host(`qbit.a0a0.org`)"
+      - "traefik.http.routers.qbittorrent.rule=Host(`qbit.${DOMAIN}`)"
       - "traefik.http.routers.qbittorrent.entrypoints=websecure"
       - "traefik.http.routers.qbittorrent.tls.certresolver=letsencrypt"
       - "traefik.http.services.qbittorrent.loadbalancer.server.port=8085"
@@ -111,7 +108,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
-      - "traefik.http.routers.sonarr.rule=Host(`sonarr.a0a0.org`)"
+      - "traefik.http.routers.sonarr.rule=Host(`sonarr.${DOMAIN}`)"
       - "traefik.http.routers.sonarr.entrypoints=websecure"
       - "traefik.http.routers.sonarr.tls.certresolver=letsencrypt"
       - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
@@ -137,7 +134,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
-      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.a0a0.org`)"
+      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.${DOMAIN}`)"
       - "traefik.http.routers.prowlarr.entrypoints=websecure"
       - "traefik.http.routers.prowlarr.tls.certresolver=letsencrypt"
       - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
@@ -164,7 +161,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
-      - "traefik.http.routers.radarr.rule=Host(`radarr.a0a0.org`)"
+      - "traefik.http.routers.radarr.rule=Host(`radarr.${DOMAIN}`)"
       - "traefik.http.routers.radarr.entrypoints=websecure"
       - "traefik.http.routers.radarr.tls.certresolver=letsencrypt"
       - "traefik.http.services.radarr.loadbalancer.server.port=7878"
@@ -191,7 +188,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
-      - "traefik.http.routers.readarr.rule=Host(`readarr.a0a0.org`)"
+      - "traefik.http.routers.readarr.rule=Host(`readarr.${DOMAIN}`)"
       - "traefik.http.routers.readarr.entrypoints=websecure"
       - "traefik.http.routers.readarr.tls.certresolver=letsencrypt"
       - "traefik.http.services.readarr.loadbalancer.server.port=8787"
@@ -217,10 +214,10 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
-      - "traefik.http.routers.lidarr.rule=Host(`lidarr.a0a0.org`)"
+      - "traefik.http.routers.lidarr.rule=Host(`lidarr.${DOMAIN}`)"
       - "traefik.http.routers.lidarr.entrypoints=websecure"
       - "traefik.http.routers.lidarr.tls.certresolver=letsencrypt"
-      - "traefik.http.services.lidarr.loadbalancer.server.port=8787"
+      - "traefik.http.services.lidarr.loadbalancer.server.port=8686"
 
   # ==================================================================================
   # ==================================================================================
@@ -252,18 +249,18 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
-      - "traefik.http.routers.bazarr.rule=Host(`bazarr.a0a0.org`)"
+      - "traefik.http.routers.bazarr.rule=Host(`bazarr.${DOMAIN}`)"
       - "traefik.http.routers.bazarr.entrypoints=websecure"
       - "traefik.http.routers.bazarr.tls.certresolver=letsencrypt"
       - "traefik.http.services.bazarr.loadbalancer.server.port=6767"
  
   #
   # ==================================================================================
-  #  Overseerr is a request management & media discovery front-end for Jellyfin (or...)
+  #  Jellyseerr is a request management & media discovery front-end for Jellyfin
   #
-  overseerr:
-    image: 'sctx/overseerr:latest'
-    container_name: overseerr
+  jellyseerr:
+    image: 'fallenbagel/jellyseerr:latest'
+    container_name: jellyseerr
     restart: unless-stopped
     networks:
       - backend_media
@@ -273,14 +270,14 @@ services:
       - 'PGID=${PGID}'
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
-      - '/mnt/zpool/Docker/Stacks/arr-stack/overseerr/config:/app/config'
+      - '/mnt/zpool/Docker/Stacks/arr-stack/jellyseerr:/app/config'
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
-      - "traefik.http.routers.overseerr.rule=Host(`overseerr.a0a0.org`)"
-      - "traefik.http.routers.overseerr.entrypoints=websecure"
-      - "traefik.http.routers.overseerr.tls.certresolver=letsencrypt"
-      - "traefik.http.services.overseerr.loadbalancer.server.port=5055"
+      - "traefik.http.routers.jellyseerr.rule=Host(`jellyseerr.${DOMAIN}`)"
+      - "traefik.http.routers.jellyseerr.entrypoints=websecure"
+      - "traefik.http.routers.jellyseerr.tls.certresolver=letsencrypt"
+      - "traefik.http.services.jellyseerr.loadbalancer.server.port=5055"
 
   #
   # ==================================================================================

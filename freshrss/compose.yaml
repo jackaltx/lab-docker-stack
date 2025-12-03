@@ -1,3 +1,4 @@
+---
 networks:
   backend_media:
     external: true
@@ -9,17 +10,13 @@ services:
     restart: unless-stopped
     networks:
       - backend_media
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
       - '/mnt/zpool/Docker/Stacks/freshrss:/config'
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
-      - "traefik.http.routers.freshrss.rule=Host(`rss.a0a0.org`)"
+      - "traefik.http.routers.freshrss.rule=Host(`rss.${DOMAIN}`)"
       - "traefik.http.routers.freshrss.entrypoints=websecure"
       - "traefik.http.routers.freshrss.tls.certresolver=letsencrypt"
       - "traefik.http.services.freshrss.loadbalancer.server.port=80"

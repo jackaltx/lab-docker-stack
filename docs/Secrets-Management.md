@@ -55,6 +55,7 @@ Each service with secrets gets a dedicated file in the Secrets dataset:
 ```
 
 **Special Case - Traefik:**
+
 - `USER_PASSWD` (dashboard password hash) remains in git-tracked `traefik3/.env`
 - Required for label substitution at Docker Compose parse-time
 - `env_file:` loads variables AFTER labels are parsed
@@ -88,6 +89,7 @@ services:
 ### What Goes Where
 
 **In git-tracked `.env` (Projects directory):**
+
 ```env
 # Safe to commit
 PUID=568
@@ -98,6 +100,7 @@ ENVIRONMENT=production
 ```
 
 **In Secrets dataset `.env` (Secrets directory):**
+
 ```env
 # NEVER commit these
 API_TOKEN=secret_key_here
@@ -109,21 +112,25 @@ JWT_SECRET=another_random_string
 ## Security Benefits
 
 ### Isolation
+
 - Secrets not mixed with application data
 - Corruption in Stacks dataset doesn't affect credentials
 - Can restore app data without exposing secrets
 
 ### Access Control
+
 - Dataset-level permissions (700)
 - Not accessible via NFS mount (Projects is NFS)
 - Only accessible via direct TrueNAS access
 
 ### Audit Trail
+
 - ZFS snapshots track every change with timestamps
 - Easy to rollback bad secret rotations
 - Snapshot diff shows what changed
 
 ### Backup/Restore
+
 - Smaller backup footprint (text files only)
 - Faster restore operations
 - Can replicate to off-site storage independently
@@ -133,6 +140,7 @@ JWT_SECRET=another_random_string
 For each service currently with secrets in git:
 
 1. **Extract secrets to new file:**
+
    ```bash
    ssh lavadmin@truenas.a0a0.org
    sudo nano /mnt/zpool/Docker/Secrets/service.env
@@ -140,6 +148,7 @@ For each service currently with secrets in git:
    ```
 
 2. **Update compose file:**
+
    ```yaml
    env_file:
      - .env
@@ -147,6 +156,7 @@ For each service currently with secrets in git:
    ```
 
 3. **Remove secrets from git-tracked .env:**
+
    ```bash
    # Keep only PUID/PGID/TZ and non-sensitive vars
    vim service/.env
@@ -155,6 +165,7 @@ For each service currently with secrets in git:
    ```
 
 4. **Test deployment:**
+
    ```bash
    ssh lavadmin@truenas.a0a0.org
    cd /mnt/zpool/Docker/Projects/service
@@ -201,11 +212,13 @@ sudo docker compose restart
 ### What to Commit
 
 **DO commit:**
+
 - `compose.yaml` files with `env_file:` directives
 - `.env` files with ONLY non-sensitive variables (PUID/PGID/TZ)
 - `.env.example` templates showing required variables
 
 **NEVER commit:**
+
 - API tokens
 - Passwords
 - Encryption keys
@@ -225,6 +238,7 @@ sudo docker compose restart
 ## Disaster Recovery
 
 ### Backup Priority
+
 1. **Critical**: Secrets dataset (credentials)
 2. **Important**: Stacks dataset (app state)
 3. **Optional**: Projects directory (git handles this)
@@ -232,6 +246,7 @@ sudo docker compose restart
 ### Recovery Scenarios
 
 **Scenario 1: Lost all Docker data**
+
 ```bash
 # Restore Secrets dataset from backup
 zfs receive zpool/Docker/Secrets < backup.zfs
@@ -241,7 +256,7 @@ zfs receive zpool/Docker/Stacks < backup.zfs
 
 # Clone git repo
 cd /mnt/zpool/Docker
-git clone https://github.com/jackaltx/true-docker.git Projects
+git clone https://github.com/jackaltx/llab-docker-stack.git Projects
 
 # Deploy services
 cd Projects/arcane
@@ -249,6 +264,7 @@ sudo docker compose up -d
 ```
 
 **Scenario 2: Secrets compromised**
+
 ```bash
 # Rollback to last known good snapshot
 sudo zfs rollback zpool/Docker/Secrets@known-good-snapshot
