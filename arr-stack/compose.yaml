@@ -1,5 +1,4 @@
-version: "3"
-
+---
 networks:
   backend_media:
     external: true
@@ -45,8 +44,6 @@ services:
       - 'TZ=${TZ}'
       - VPN_SERVICE_PROVIDER=private internet access
       - VPN_TYPE=openvpn
-      - 'OPENVPN_USER=${OPENVPN_USER}'
-      - 'OPENVPN_PASSWORD=${OPENVPN_PASSWORD}'
       - UPDATER_PERIOD=24h
       # https://forums.truenas.com/t/guide-to-installing-transmission-with-pia-and-port-forwarding-on-truenas-24-10-electriceel-and-later/22664
       - PORT_FORWARD_ONLY=true
