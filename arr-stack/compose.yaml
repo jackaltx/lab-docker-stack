@@ -49,6 +49,7 @@ services:
       - PORT_FORWARD_ONLY=true
       - VPN_PORT_FORWARDING=on
       - SERVER_HOSTNAMES=italy-2.privacy.network,italy.privacy.network
+      - DNS_ADDRESS=8.8.8.8  # Google DNS - avoids Cloudflare blocks
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
@@ -216,7 +217,7 @@ services:
       - "traefik.http.routers.lidarr.rule=Host(`lidarr.${DOMAIN}`)"
       - "traefik.http.routers.lidarr.entrypoints=websecure"
       - "traefik.http.routers.lidarr.tls.certresolver=letsencrypt"
-      - "traefik.http.services.lidarr.loadbalancer.server.port=8787"
+      - "traefik.http.services.lidarr.loadbalancer.server.port=8686"
 
   # ==================================================================================
   # ==================================================================================
@@ -255,11 +256,11 @@ services:
  
   #
   # ==================================================================================
-  #  Overseerr is a request management & media discovery front-end for Jellyfin (or...)
+  #  Jellyseerr is a request management & media discovery front-end for Jellyfin
   #
-  overseerr:
-    image: 'sctx/overseerr:latest'
-    container_name: overseerr
+  jellyseerr:
+    image: 'fallenbagel/jellyseerr:latest'
+    container_name: jellyseerr
     restart: unless-stopped
     networks:
       - backend_media
@@ -269,14 +270,14 @@ services:
       - 'PGID=${PGID}'
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
-      - '/mnt/zpool/Docker/Stacks/arr-stack/overseerr/config:/app/config'
+      - '/mnt/zpool/Docker/Stacks/arr-stack/jellyseerr:/app/config'
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
-      - "traefik.http.routers.overseerr.rule=Host(`overseerr.${DOMAIN}`)"
-      - "traefik.http.routers.overseerr.entrypoints=websecure"
-      - "traefik.http.routers.overseerr.tls.certresolver=letsencrypt"
-      - "traefik.http.services.overseerr.loadbalancer.server.port=5055"
+      - "traefik.http.routers.jellyseerr.rule=Host(`jellyseerr.${DOMAIN}`)"
+      - "traefik.http.routers.jellyseerr.entrypoints=websecure"
+      - "traefik.http.routers.jellyseerr.tls.certresolver=letsencrypt"
+      - "traefik.http.services.jellyseerr.loadbalancer.server.port=5055"
 
   #
   # ==================================================================================
