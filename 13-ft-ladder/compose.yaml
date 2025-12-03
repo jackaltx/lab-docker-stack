@@ -19,7 +19,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
-      - "traefik.http.routers.ladder.rule=Host(`ladder.a0a0.org`)"
+      - "traefik.http.routers.ladder.rule=Host(`ladder.${DOMAIN}`)"
       - "traefik.http.routers.ladder.entrypoints=websecure"
       - "traefik.http.routers.ladder.tls.certresolver=letsencrypt"
       - "traefik.http.services.ladder.loadbalancer.server.port=5000"

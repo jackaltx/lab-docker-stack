@@ -1,5 +1,3 @@
-version: "3"
-
 networks:
   backend_media:
     external: true
@@ -16,18 +14,12 @@ services:
     restart: unless-stopped
     networks:
       - backend_media
-    environment:
-      - 'TZ=${TZ}'
-      - DOZZLE_LEVEL=info
-      - DOZZLE_TAILSIZE=300
-      - DOZZLE_FILTER=status=running
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
       - '/var/run/docker.sock:/var/run/docker.sock:ro'
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=backend_media"      
-      - "traefik.http.routers.dozzle.rule=Host(`dozzle.a0a0.org`)"
+      - "traefik.http.routers.dozzle.rule=Host(`dozzle.${DOMAIN}`)"
       - "traefik.http.routers.dozzle.entrypoints=websecure"
       - "traefik.http.routers.dozzle.tls.certresolver=letsencrypt"
       - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
