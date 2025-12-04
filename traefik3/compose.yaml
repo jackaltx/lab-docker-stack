@@ -24,13 +24,13 @@ services:
       - "192.168.40.6:443:443"   # Host 8443 → Container 443 (HTTPS services)
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /mnt/zpool/Docker/Stacks/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-      - /mnt/zpool/Docker/Stacks/traefik/acme:/acme
-      - /mnt/zpool/Docker/Stacks/traefik/access.log:/var/log/traefik/access.log
+      - ${DOCKER_ROOT}/Stacks/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ${DOCKER_ROOT}/Stacks/traefik/acme:/acme
+      - ${DOCKER_ROOT}/Stacks/traefik/access.log:/var/log/traefik/access.log
       - /etc/localtime:/etc/localtime:ro
     env_file:
       - .env
-      - /mnt/zpool/Docker/Secrets/traefik.env
+      - ${DOCKER_ROOT}/Secrets/traefik.env
 #    environment:
 #      - LINODE_TOKEN=${LINODE_TOKEN}
     labels:

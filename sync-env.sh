@@ -22,8 +22,8 @@ source "$GLOBAL_ENV"
 # List of variables to sync
 SYNC_VARS=("PUID" "PGID" "TZ" "DOMAIN" "DOCKER_ROOT" "MEDIA_ROOT")
 
-# Target directories (for now, just freshrss for testing)
-TARGETS=("freshrss")
+# Target directories
+TARGETS=("freshrss" "traefik3")
 
 echo "Syncing from .env.global to stack .env files..."
 echo ""
