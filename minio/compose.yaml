@@ -10,10 +10,10 @@ services:
     networks:
       - backend_storage
     volumes:
-      - /mnt/zpool/Docker/Stacks/minio:/data # Persistent storage for MinIO data
+      - ${DOCKER_ROOT}/Stacks/minio:/data # Persistent storage for MinIO data
     command: server /data --console-address ":9001"
     env_file:
-      - /mnt/zpool/Docker/Secrets/minio.env
+      - ${DOCKER_ROOT}/Secrets/minio.env
     labels:
       - "traefik.enable=true"
       # API endpoint

@@ -23,7 +23,7 @@ source "$GLOBAL_ENV"
 SYNC_VARS=("PUID" "PGID" "TZ" "DOMAIN" "DOCKER_ROOT" "MEDIA_ROOT")
 
 # Target directories
-TARGETS=("freshrss" "traefik3")
+TARGETS=("freshrss" "traefik3" "arcane" "gitea" "homarr" "jellyfin" "minio")
 
 echo "Syncing from .env.global to stack .env files..."
 echo ""

@@ -3,13 +3,13 @@ services:
     image: ghcr.io/getarcaneapp/arcane:latest
     container_name: arcane
     env_file:
-      - /mnt/zpool/Docker/Secrets/arcane.env
+      - ${DOCKER_ROOT}/Secrets/arcane.env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /mnt/zpool/Docker/Stacks/arcane:/app/data
-      - /mnt/zpool/Docker/Projects:/app/data/projects
-      - /mnt/zpool/Docker/Stacks:/app/data/stacks
-      - /mnt/zpool/Docker/Secrets:/mnt/zpool/Docker/Secrets:ro
+      - ${DOCKER_ROOT}/Stacks/arcane:/app/data
+      - ${DOCKER_ROOT}/Projects:/app/data/projects
+      - ${DOCKER_ROOT}/Stacks:/app/data/stacks
+      - ${DOCKER_ROOT}/Secrets:${DOCKER_ROOT}/Secrets:ro
     networks:
       - backend_storage
     labels:

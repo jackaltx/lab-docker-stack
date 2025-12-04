@@ -11,12 +11,12 @@ services:
     networks:
       - backend_media
     volumes:
-      - /mnt/zpool/Docker/Stacks/jellyfin/config:/config
-      - /mnt/zpool/Docker/Stacks/jellyfin/cache:/cache
-      - /mnt/zpool/Media/Movies:/jellyfin-movies
-      - /mnt/zpool/Media/Music:/jellyfin-music
-      - /mnt/zpool/Media/Series:/jellyfin-series
-      - /mnt/zpool/Media/Music-Lessons:/jellyfin/music-lessons
+      - ${DOCKER_ROOT}/Stacks/jellyfin/config:/config
+      - ${DOCKER_ROOT}/Stacks/jellyfin/cache:/cache
+      - ${MEDIA_ROOT}/Movies:/jellyfin-movies
+      - ${MEDIA_ROOT}/Music:/jellyfin-music
+      - ${MEDIA_ROOT}/Series:/jellyfin-series
+      - ${MEDIA_ROOT}/Music-Lessons:/jellyfin/music-lessons
       - /etc/localtime:/etc/localtime:ro
     labels:
       - "traefik.enable=true"
