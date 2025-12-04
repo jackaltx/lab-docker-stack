@@ -255,7 +255,8 @@ When working with this repository:
 4. **Create compose.yaml + .env** - Follow established patterns
 5. **Document special requirements** - Create stack README for non-standard behavior (e.g., password in logs)
 6. **Add to sync-env.sh** - Only after files are created and tested
-7. **Never auto-deploy without asking** - Let user deploy when ready
+7. **Update SOFTWARE-BOM.md** - Add to inventory, document mounts, note ownership anomalies
+8. **Never auto-deploy without asking** - Let user deploy when ready
 
 ### Path Variable Rules
 
@@ -332,6 +333,7 @@ cd jellyfin && docker compose config | grep "Host("
 
 ## Related Documentation
 
+- [SOFTWARE-BOM.md](SOFTWARE-BOM.md) - Complete inventory for backup/migration/security
 - [Secrets-Management.md](Secrets-Management.md) - Secrets storage strategy
 - [UID-GID-Strategy.md](UID-GID-Strategy.md) - Permission management
 - [CLAUDE.md](../CLAUDE.md) - Complete system documentation
