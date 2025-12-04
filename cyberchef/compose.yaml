@@ -13,7 +13,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_storage"
-      - "traefik.http.routers.cyberchef.rule=Host(`cyberchef.${DOMAIN}`)"
+      - "traefik.http.routers.cyberchef.rule=Host(`${CYBERCHEF_HOST}.${DOMAIN}`)"
       - "traefik.http.routers.cyberchef.entrypoints=websecure"
       - "traefik.http.routers.cyberchef.tls.certresolver=letsencrypt"
       - "traefik.http.routers.cyberchef.service=cyberchef"

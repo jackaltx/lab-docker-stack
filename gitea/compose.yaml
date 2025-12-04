@@ -18,7 +18,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_storage"
       # Web UI
-      - "traefik.http.routers.gitea.rule=Host(`gitea.${DOMAIN}`)"
+      - "traefik.http.routers.gitea.rule=Host(`${GITEA_HOST}.${DOMAIN}`)"
       - "traefik.http.routers.gitea.entrypoints=websecure"
       - "traefik.http.routers.gitea.tls.certresolver=letsencrypt"
       - "traefik.http.services.gitea.loadbalancer.server.port=3000"
