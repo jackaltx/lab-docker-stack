@@ -12,6 +12,8 @@ services:
       - ${DOCKER_ROOT}/Stacks/filebrowser:/config
       - ${DOCKER_ROOT}:/srv/Docker
       - ${MEDIA_ROOT}:/srv/Media
+      - ${ZPOOL_ROOT}/storage-nfs:/srv/storage-nfs
+      - ${ZPOOL_ROOT}/storage-share:/srv/storage-smb
       - /etc/localtime:/etc/localtime:ro
     networks:
       - backend_storage
