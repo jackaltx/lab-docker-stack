@@ -72,7 +72,7 @@ vim .env.global              # Set DOCKER_ROOT, MEDIA_ROOT, DOMAIN
 cat docs/Portable-Deployment.md
 
 # Services managed via Arcane GUI
-# https://arcane.a0a0.org
+# https://arcane.example.com
 ```
 
 See [docs/Portable-Deployment.md](docs/Portable-Deployment.md) for complete deployment workflow.
@@ -83,14 +83,14 @@ All services accessible via HTTPS with automatic certificates:
 
 | Service | URL | Purpose |
 |---------|-----|---------|
-| Traefik | <https://docker.a0a0.org> | Reverse proxy dashboard |
-| Homarr | <https://home.a0a0.org> | Main dashboard |
-| Arcane | <https://arcane.a0a0.org> | Docker management GUI |
-| Jellyfin | <https://jellyfin.a0a0.org> | Media streaming |
-| Overseerr | <https://overseerr.a0a0.org> | Media requests |
-| Gitea | <https://gitea.a0a0.org> | Git hosting |
-| MinIO | <https://minio-true.a0a0.org> | S3 storage console |
-| Dozzle | <https://dozzle.a0a0.org> | Container logs |
+| Traefik | <https://docker.example.com> | Reverse proxy dashboard |
+| Homarr | <https://home.example.com> | Main dashboard |
+| Arcane | <https://arcane.example.com> | Docker management GUI |
+| Jellyfin | <https://jellyfin.example.com> | Media streaming |
+| Overseerr | <https://overseerr.example.com> | Media requests |
+| Gitea | <https://gitea.example.com> | Git hosting |
+| MinIO | <https://minio-true.example.com> | S3 storage console |
+| Dozzle | <https://dozzle.example.com> | Container logs |
 
 See [CLAUDE.md](CLAUDE.md#deployed-projects) for complete service list and details.
 
