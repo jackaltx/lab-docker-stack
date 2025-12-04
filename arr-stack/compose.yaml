@@ -48,7 +48,11 @@ services:
       # https://forums.truenas.com/t/guide-to-installing-transmission-with-pia-and-port-forwarding-on-truenas-24-10-electriceel-and-later/22664
       - PORT_FORWARD_ONLY=true
       - VPN_PORT_FORWARDING=on
-      - SERVER_HOSTNAMES=italy-2.privacy.network,italy.privacy.network
+      #- SERVER_HOSTNAMES=mexico.privacy.network 
+      #- SERVER_HOSTNAMES=italy.privacy.network
+      #- SERVER_HOSTNAMES=canada.privacy.network          # Toronto
+      #- SERVER_HOSTNAMES=us-california.privacy.network   # Los Angeles
+      - SERVER_HOSTNAMES=de-frankfurt.privacy.network     # Amsterdam
       - DNS_ADDRESS=8.8.8.8  # Google DNS - avoids Cloudflare blocks
     labels:
       - "traefik.enable=true"
