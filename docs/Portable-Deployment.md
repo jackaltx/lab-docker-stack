@@ -32,6 +32,33 @@ volumes:
   - ${MEDIA_ROOT}/Movies:/movies
 ```
 
+### Hostname Configuration (Per-Stack)
+
+Each Traefik-enabled stack has configurable hostname variables in its `.env` file:
+
+```bash
+# Example: jellyfin/.env
+JELLYFIN_HOST=jellyfin
+```
+
+**Naming Convention:**
+- Single service: `{SERVICE}_HOST` (e.g., `JELLYFIN_HOST`, `ARCANE_HOST`)
+- Multiple services: Descriptive names (e.g., `MINIO_API_HOST`, `MINIO_CONSOLE_HOST`)
+
+**Usage in Traefik Labels:**
+```yaml
+labels:
+  - "traefik.http.routers.jellyfin.rule=Host(`${JELLYFIN_HOST}.${DOMAIN}`)"
+```
+
+**Stacks with Hostname Variables:**
+- **Single hostname (10):** freshrss, traefik3, arcane, gitea, homarr, jellyfin, 13-ft-ladder, cyberchef, dozzle, it-tools
+- **Multiple hostnames:**
+  - **minio (2):** `MINIO_API_HOST`, `MINIO_CONSOLE_HOST`
+  - **arr-stack (8):** `QBIT_HOST`, `SONARR_HOST`, `PROWLARR_HOST`, `RADARR_HOST`, `READARR_HOST`, `LIDARR_HOST`, `BAZARR_HOST`, `JELLYSEERR_HOST`
+
+**Important:** Hostname variables are **manual-edit only**. They are NOT synced by `sync-env.sh`.
+
 ## Deployment Workflow
 
 ### New Machine Setup
@@ -59,7 +86,18 @@ volumes:
    ```
    This propagates `.env.global` values to all stack `.env` files.
 
-4. **Create directory structure:**
+4. **(Optional) Customize hostnames:**
+   Edit individual stack `.env` files to change service hostnames:
+   ```bash
+   # Example: Use different hostname for Jellyfin
+   vim jellyfin/.env
+   # Change: JELLYFIN_HOST=jellyfin
+   # To:     JELLYFIN_HOST=media
+   ```
+
+   This enables CNAME-based DNS management. Default hostnames work out of the box.
+
+5. **Create directory structure:**
    ```bash
    # For arr-stack
    cd arr-stack
@@ -70,7 +108,7 @@ volumes:
    mkdir -p $MEDIA_ROOT/{Movies,Series,Music,Books,Downloads}
    ```
 
-5. **Deploy stacks:**
+6. **Deploy stacks:**
    Use Arcane GUI or docker compose:
    ```bash
    docker compose -f traefik3/compose.yaml up -d
@@ -202,9 +240,10 @@ Planned `bootstrap.sh` script will automate:
 When working with this repository:
 
 1. **Never hardcode paths** - Always use `${DOCKER_ROOT}` or `${MEDIA_ROOT}`
-2. **Update .env.global first** - Then run sync-env.sh
-3. **Add new stacks to sync-env.sh** - Add to TARGETS array
-4. **Test interpolation** - Verify with `docker compose config`
+2. **Never hardcode hostnames** - Always use `${SERVICE_HOST}.${DOMAIN}` pattern
+3. **Update .env.global first** - Then run sync-env.sh for path variables
+4. **Add new stacks to sync-env.sh** - Add to TARGETS array
+5. **Test interpolation** - Verify with `docker compose config`
 
 ### Path Variable Rules
 
@@ -212,14 +251,28 @@ When working with this repository:
 - **MEDIA_ROOT** - For media files only (movies, music, books, etc.)
 - **Never use** - `/mnt/zpool`, `/opt/Docker`, or any absolute paths
 
+### Hostname Variable Rules
+
+- **Naming:** `{SERVICE}_HOST` for single services, descriptive for multiple (e.g., `MINIO_API_HOST`)
+- **Location:** Per-stack `.env` files (NOT `.env.global`)
+- **Syncing:** Manual-edit only, NOT synced by sync-env.sh
+- **Default:** Use existing hostname as default value
+- **Traefik labels:** Always use `Host(\`${SERVICE_HOST}.${DOMAIN}\`)` pattern
+
 ### Verification Commands
 
 ```bash
 # Check for hardcoded paths
 grep -r "/mnt/zpool" */compose.yaml
 
-# Verify interpolation works
+# Check for hardcoded hostnames in Traefik labels
+grep -r "Host(" */compose.yaml | grep -v '\${.*_HOST}'
+
+# Verify path interpolation works
 cd traefik3 && docker compose config | grep -A5 volumes
+
+# Verify hostname interpolation works
+cd jellyfin && docker compose config | grep "Host("
 
 # Test sync
 ./sync-env.sh
@@ -253,6 +306,17 @@ cd traefik3 && docker compose config | grep -A5 volumes
 1. Check: `ls $DOCKER_ROOT/Secrets/`
 2. Create missing secrets files (see [Secrets-Management.md](Secrets-Management.md))
 3. Verify interpolation: `docker compose config`
+
+### Hostname Not Resolving
+
+**Problem:** Service accessible via IP but not hostname
+
+**Solutions:**
+1. Verify DNS CNAME records point to main server
+2. Check Traefik is running: `docker ps | grep traefik`
+3. Verify hostname interpolation: `docker compose config | grep "Host("`
+4. Check Let's Encrypt logs for certificate issues
+5. Ensure `DOMAIN` variable is set correctly in `.env`
 
 ## Related Documentation
 
