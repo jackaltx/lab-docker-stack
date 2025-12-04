@@ -14,7 +14,7 @@ Docker Compose configurations for a complete self-hosted media and infrastructur
 
 ### AI-Assisted Development Experiment
 
-The real feature is the development methodology: using Claude Code to create, update, and test on a remote system. This is "vibe coding" - setting goals and expectations, then collaborating with AI to realize concepts through documentation and implementation.
+The real feature is the development methodology: using Claude Code to create, update, and test on a remote system. This is "vibe coding" - setting goals and expectations, then collaborating with AI to realize concepts through documentation and implementation.  I am hoping this will grow into an AI IDE for building systems of systems at the small home/test lab level.
 
 As the project builds, lessons learned provide AI context for what's required. Goal: quickly realize standalone containers, then progressively more complicated stacks. Realizing means engineering the product. Development happens in sprints: build, test, deploy, verify. Verification is the hardest part.
 
@@ -24,8 +24,8 @@ Part of the larger **[SOLTI](https://github.com/jackaltx/solti-dev)** exploratio
 
 - Full control over compose files and configurations
 - Standard Docker workflows (no proprietary formats)
-- Easy migration and version control
-- Better suited for complex multi-service stacks
+- Simplify migration and version control
+- Better suited for complex multi-service stacks (a purty way to day  "Rats, I already used that port on this machine.")
 
 ## Key Features
 
@@ -41,8 +41,9 @@ Part of the larger **[SOLTI](https://github.com/jackaltx/solti-dev)** exploratio
 
 - **Network Segmentation:** Separate backend_storage and backend_media networks
 - **Secrets Management:** ZFS dataset isolation (see [docs/Secrets-Management.md](docs/Secrets-Management.md))
-- **Domain Pattern:** All services via `*.a0a0.org` with automatic SSL
-- **VPN:** Gluetun with Private Internet Access for torrent traffic
+- **DNS Domain Pattern:** All services mapped using CNAME to A record uisng single domain providing automated SSL. e.g., `https://jellyfin.example.com`
+- **Simplied Templating** site specific information isolate in env file allows simple name-value customization.
+- **VPN:** Using a Kill-Switch Private Internet Access front end for a private in-machine network. 
 
 ## Claude Code Project
 
