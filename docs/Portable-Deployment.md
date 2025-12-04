@@ -245,6 +245,18 @@ When working with this repository:
 4. **Add new stacks to sync-env.sh** - Add to TARGETS array
 5. **Test interpolation** - Verify with `docker compose config`
 
+### Adding New Stacks
+
+**IMPORTANT - Follow this process:**
+
+1. **Ask deployment target FIRST** - "Where will this be deployed?" (Stacks are portable, don't assume)
+2. **Research container requirements** - Read official image docs for required volumes/mounts
+3. **Check user/permission model** - Some apps manage their own users (don't always use PUID/PGID)
+4. **Create compose.yaml + .env** - Follow established patterns
+5. **Document special requirements** - Create stack README for non-standard behavior (e.g., password in logs)
+6. **Add to sync-env.sh** - Only after files are created and tested
+7. **Never auto-deploy without asking** - Let user deploy when ready
+
 ### Path Variable Rules
 
 - **DOCKER_ROOT** - For all application config, state, secrets

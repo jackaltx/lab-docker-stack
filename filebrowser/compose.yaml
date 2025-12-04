@@ -10,6 +10,7 @@ services:
     user: "${PUID}:${PGID}"
     volumes:
       - ${DOCKER_ROOT}/Stacks/filebrowser:/config
+      - ${DOCKER_ROOT}/Stacks/filebrowser:/database
       - ${DOCKER_ROOT}:/srv/Docker
       - ${MEDIA_ROOT}:/srv/Media
       - ${ZPOOL_ROOT}/storage-nfs:/srv/storage-nfs
