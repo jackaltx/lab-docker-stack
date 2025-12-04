@@ -2,23 +2,26 @@
 
 > **⚠️ EXPERIMENTAL - VERY EARLY STAGE**
 >
-> This is a development experiment, not production-ready software. Do not use without deep thought. Not suitable for internet-facing deployments.
+> Development experiment, not production ready. Works but evolving.
+>
+> **USE AT YOUR OWN RISK**
 
-> **USE AT YOUR RISK, PRACTICE SAFE HEX!**
-
-Self-hosted Docker infrastructure developed on TrueNAS Scale (should work on any Debian distro - TBD), bypassing the built-in Apps system for maximum control and portability.
+Self-hosted Docker infrastructure on TrueNAS Scale (should work on any Debian-based system), bypassing built-in Apps for control and portability.
 
 ## Overview
 
-This repository contains Docker Compose configurations for a complete self-hosted media and infrastructure stack. Developed directly on TrueNAS using standard Docker Compose, managed through [Arcane](https://github.com/getarcaneapp/arcane) for GUI control.
+Docker Compose configurations for a complete self-hosted media and infrastructure stack. Runs directly on TrueNAS using standard Docker Compose, managed through [Arcane](https://github.com/getarcaneapp/arcane) GUI.
 
 ### AI-Assisted Development Experiment
 
-The real feature here is the development methodology: using Claude Code to create, update, and test on a remote system. This is an experiment in "vibe coding" - setting goals and expectations, then collaborating with AI to realize concepts through documentation and implementation.
+The real feature is the development methodology: using Claude Code to create, update, and test on a remote system. This is "vibe coding" - setting goals and expectations, then collaborating with AI to realize concepts through documentation and implementation.
 
-This repository is part of a larger project called **[SOLTI](https://github.com/jackaltx/solti-dev)** (AI co-developed)
+As the project builds, lessons learned provide AI context for what's required. Goal: quickly realize standalone containers, then progressively more complicated stacks. Realizing means engineering the product. Development happens in sprints: build, test, deploy, verify. Verification is the hardest part.
+
+Part of the larger **[SOLTI](https://github.com/jackaltx/solti-dev)** exploration project (AI co-developed)
 
 **Why bypass TrueNAS Apps?**
+
 - Full control over compose files and configurations
 - Standard Docker workflows (no proprietary formats)
 - Easy migration and version control
@@ -43,12 +46,13 @@ This repository is part of a larger project called **[SOLTI](https://github.com/
 
 ## Claude Code Project
 
-This is a **Claude Code managed project**. All architectural decisions, patterns, and workflows are documented for AI-assisted development.
+**Claude Code managed project** - all architectural decisions, patterns, and workflows documented for AI-assisted development.
 
 ### Developer Instructions
 
 - **Start here:** [CLAUDE.md](CLAUDE.md) - Complete system documentation
 - **Deployment:** [docs/Portable-Deployment.md](docs/Portable-Deployment.md) - Portable path configuration
+- **Inventory:** [docs/SOFTWARE-BOM.md](docs/SOFTWARE-BOM.md) - Bill of Materials for backup/migration/security
 - **Secrets:** [docs/Secrets-Management.md](docs/Secrets-Management.md) - ZFS dataset strategy
 - **UID/GID:** [docs/UID-GID-Strategy.md](docs/UID-GID-Strategy.md) - Permission management
 
@@ -78,20 +82,20 @@ All services accessible via HTTPS with automatic certificates:
 
 | Service | URL | Purpose |
 |---------|-----|---------|
-| Traefik | https://docker.a0a0.org | Reverse proxy dashboard |
-| Homarr | https://home.a0a0.org | Main dashboard |
-| Arcane | https://arcane.a0a0.org | Docker management GUI |
-| Jellyfin | https://jellyfin.a0a0.org | Media streaming |
-| Overseerr | https://overseerr.a0a0.org | Media requests |
-| Gitea | https://gitea.a0a0.org | Git hosting |
-| MinIO | https://minio-true.a0a0.org | S3 storage console |
-| Dozzle | https://dozzle.a0a0.org | Container logs |
+| Traefik | <https://docker.a0a0.org> | Reverse proxy dashboard |
+| Homarr | <https://home.a0a0.org> | Main dashboard |
+| Arcane | <https://arcane.a0a0.org> | Docker management GUI |
+| Jellyfin | <https://jellyfin.a0a0.org> | Media streaming |
+| Overseerr | <https://overseerr.a0a0.org> | Media requests |
+| Gitea | <https://gitea.a0a0.org> | Git hosting |
+| MinIO | <https://minio-true.a0a0.org> | S3 storage console |
+| Dozzle | <https://dozzle.a0a0.org> | Container logs |
 
 See [CLAUDE.md](CLAUDE.md#deployed-projects) for complete service list and details.
 
 ## Contributing
 
-This is a personal infrastructure project, but feel free to use it as a reference for your own TrueNAS Docker deployments.
+Personal infrastructure project. Use as reference for your own TrueNAS Docker deployments.
 
 ## License
 

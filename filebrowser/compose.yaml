@@ -1,0 +1,28 @@
+---
+networks:
+  backend_storage:
+    external: true
+
+services:
+  filebrowser:
+    image: filebrowser/filebrowser:latest
+    container_name: filebrowser
+    user: "${PUID}:${PGID}"
+    volumes:
+      - ${DOCKER_ROOT}/Stacks/filebrowser:/config
+      - ${DOCKER_ROOT}/Stacks/filebrowser:/database
+      - ${DOCKER_ROOT}:/srv/Docker
+      - ${MEDIA_ROOT}:/srv/Media
+      - ${ZPOOL_ROOT}/storage-nfs:/srv/storage-nfs
+      - ${ZPOOL_ROOT}/storage-share:/srv/storage-smb
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - backend_storage
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=backend_storage"
+      - "traefik.http.routers.filebrowser.rule=Host(`${FILEBROWSER_HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.filebrowser.entrypoints=websecure"
+      - "traefik.http.routers.filebrowser.tls.certresolver=letsencrypt"
+      - "traefik.http.services.filebrowser.loadbalancer.server.port=80"
+    restart: unless-stopped
