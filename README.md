@@ -48,6 +48,7 @@ This is a **Claude Code managed project**. All architectural decisions, patterns
 ### Developer Instructions
 
 - **Start here:** [CLAUDE.md](CLAUDE.md) - Complete system documentation
+- **Deployment:** [docs/Portable-Deployment.md](docs/Portable-Deployment.md) - Portable path configuration
 - **Secrets:** [docs/Secrets-Management.md](docs/Secrets-Management.md) - ZFS dataset strategy
 - **UID/GID:** [docs/UID-GID-Strategy.md](docs/UID-GID-Strategy.md) - Permission management
 
@@ -58,12 +59,18 @@ This is a **Claude Code managed project**. All architectural decisions, patterns
 git clone https://github.com/jackaltx/lab-docker-stack.git
 cd lab-docker-stack
 
-# Review CLAUDE.md for full setup instructions
-cat CLAUDE.md
+# Configure for your environment
+vim .env.global              # Set DOCKER_ROOT, MEDIA_ROOT, DOMAIN
+./sync-env.sh               # Sync to all stack .env files
+
+# Review deployment guide
+cat docs/Portable-Deployment.md
 
 # Services managed via Arcane GUI
 # https://arcane.a0a0.org
 ```
+
+See [docs/Portable-Deployment.md](docs/Portable-Deployment.md) for complete deployment workflow.
 
 ## Services
 

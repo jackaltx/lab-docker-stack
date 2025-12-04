@@ -37,9 +37,9 @@ services:
       - 8085:8085 # qbittorrent
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
-      - '/mnt/zpool/Docker/Stacks/arr-stack/gluetun:/gluetun'
+      - '${DOCKER_ROOT}/Stacks/arr-stack/gluetun:/gluetun'
     env_file:
-      - /mnt/zpool/Docker/Secrets/arr-stack.env
+      - ${DOCKER_ROOT}/Secrets/arr-stack.env
     environment:
       - 'TZ=${TZ}'
       - VPN_SERVICE_PROVIDER=private internet access
@@ -48,7 +48,11 @@ services:
       # https://forums.truenas.com/t/guide-to-installing-transmission-with-pia-and-port-forwarding-on-truenas-24-10-electriceel-and-later/22664
       - PORT_FORWARD_ONLY=true
       - VPN_PORT_FORWARDING=on
-      - SERVER_HOSTNAMES=italy-2.privacy.network,italy.privacy.network
+      #- SERVER_HOSTNAMES=mexico.privacy.network 
+      #- SERVER_HOSTNAMES=italy.privacy.network
+      #- SERVER_HOSTNAMES=canada.privacy.network          # Toronto
+      #- SERVER_HOSTNAMES=us-california.privacy.network   # Los Angeles
+      - SERVER_HOSTNAMES=de-frankfurt.privacy.network     # Amsterdam
       - DNS_ADDRESS=8.8.8.8  # Google DNS - avoids Cloudflare blocks
     labels:
       - "traefik.enable=true"
@@ -74,8 +78,8 @@ services:
       - WEBUI_PORT=8085
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
-      - '/mnt/zpool/Docker/Stacks/arr-stack/qbittorrent:/config'
-      - '/mnt/zpool/Media/Downloads:/downloads'
+      - '${DOCKER_ROOT}/Stacks/arr-stack/qbittorrent:/config'
+      - '${MEDIA_ROOT}/Downloads:/downloads'
     depends_on:
       - gluetun
     restart: always
@@ -102,9 +106,9 @@ services:
       - 'TZ=${TZ}'
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
-      - '/mnt/zpool/Docker/Stacks/arr-stack/sonarr/data:/config'
-      - '/mnt/zpool/Media/Series:/tv' # (moves to after download)
-      - '/mnt/zpool/Media/Downloads:/downloads' # (where bt downloads into)
+      - '${DOCKER_ROOT}/Stacks/arr-stack/sonarr/data:/config'
+      - '${MEDIA_ROOT}/Series:/tv' # (moves to after download)
+      - '${MEDIA_ROOT}/Downloads:/downloads' # (where bt downloads into)
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
@@ -130,7 +134,7 @@ services:
       - 'TZ=${TZ}'
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
-      - '/mnt/zpool/Docker/Stacks/arr-stack/prowlarr/data:/config'
+      - '${DOCKER_ROOT}/Stacks/arr-stack/prowlarr/data:/config'
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
@@ -155,9 +159,9 @@ services:
       - 'TZ=${TZ}'
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
-      - '/mnt/zpool/Docker/Stacks/arr-stack/radarr:/config'
-      - '/mnt/zpool/Media/Movies:/movies' # (moves to after download)
-      - '/mnt/zpool/Media/Downloads:/downloads' # (where bt downloads into)
+      - '${DOCKER_ROOT}/Stacks/arr-stack/radarr:/config'
+      - '${MEDIA_ROOT}/Movies:/movies' # (moves to after download)
+      - '${MEDIA_ROOT}/Downloads:/downloads' # (where bt downloads into)
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
@@ -182,9 +186,9 @@ services:
       - 'TZ=${TZ}'
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
-      - '/mnt/zpool/Docker/Stacks/arr-stack/readarr/config:/config' # Stores Readarr's database and configuration
-      - '/mnt/zpool/Media/Books:/books' # (moves to after download)
-      - '/mnt/zpool/Media/Downloads:/downloads' # (where bt downloads into)
+      - '${DOCKER_ROOT}/Stacks/arr-stack/readarr/config:/config' # Stores Readarr's database and configuration
+      - '${MEDIA_ROOT}/Books:/books' # (moves to after download)
+      - '${MEDIA_ROOT}/Downloads:/downloads' # (where bt downloads into)
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
@@ -208,9 +212,9 @@ services:
       - 'TZ=${TZ}'
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
-      - '/mnt/zpool/Docker/Stacks/arr-stack/lidarr/config:/config' # Stores Readarr's database and configuration
-      - '/mnt/zpool/Media/Music:/music' # (moves to after download)
-      - '/mnt/zpool/Media/Downloads:/downloads' # (where bt downloads into)
+      - '${DOCKER_ROOT}/Stacks/arr-stack/lidarr/config:/config' # Stores Readarr's database and configuration
+      - '${MEDIA_ROOT}/Music:/music' # (moves to after download)
+      - '${MEDIA_ROOT}/Downloads:/downloads' # (where bt downloads into)
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
@@ -243,9 +247,9 @@ services:
       - UMASK_SET=022
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
-      - '/mnt/zpool/Docker/Stacks/arr-stack/bazarr:/config'
-      - '/mnt/zpool/Media/Movies:/movies'
-      - '/mnt/zpool/Media/Series:/tv'
+      - '${DOCKER_ROOT}/Stacks/arr-stack/bazarr:/config'
+      - '${MEDIA_ROOT}/Movies:/movies'
+      - '${MEDIA_ROOT}/Series:/tv'
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
@@ -270,7 +274,7 @@ services:
       - 'PGID=${PGID}'
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
-      - '/mnt/zpool/Docker/Stacks/arr-stack/jellyseerr:/app/config'
+      - '${DOCKER_ROOT}/Stacks/arr-stack/jellyseerr:/app/config'
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"

@@ -16,10 +16,10 @@ services:
     networks:
       - backend_media
     env_file:
-      - /mnt/zpool/Docker/Secrets/homarr.env
+      - ${DOCKER_ROOT}/Secrets/homarr.env
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
-      - '/mnt/zpool/Docker/Stacks/homarr:/appdata'
+      - '${DOCKER_ROOT}/Stacks/homarr:/appdata'
       - '/var/run/docker.sock:/var/run/docker.sock:ro'  # Optional - for Docker integration
     labels:
       - "traefik.enable=true"
