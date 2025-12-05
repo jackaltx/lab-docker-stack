@@ -87,7 +87,7 @@
 
 | Container | Image | Version | Base OS | Technology | Registry | Networks |
 |-----------|-------|---------|---------|------------|----------|----------|
-| minio | minio/minio | latest | (Not running) | Go | docker.io | backend_storage |
+| minio | minio/minio | 2025-09-07T16-13-09Z | Alpine 3.22 | Go | docker.io | backend_storage |
 
 **Notes:**
 - MinIO credentials stored in `/mnt/zpool/Docker/Secrets/minio.env`
@@ -121,15 +121,13 @@
 
 | Technology | Container Count | Containers | CVE Tracking |
 |------------|----------------|------------|--------------|
-| Go | 7 | traefik, dozzle, gitea, gluetun, filebrowser, unpackerr, minio* | golang.org/security |
+| Go | 7 | traefik, dozzle, gitea, gluetun, filebrowser, unpackerr, minio | golang.org/security |
 | .NET/Mono | 7 | sonarr, radarr, lidarr, readarr, prowlarr, jellyfin, recyclarr | dotnet.microsoft.com/security |
 | Node.js | 4 | arcane, homarr, jellyseerr, it-tools | nodejs.org/security |
 | Python | 3 | bazarr, flaresolverr, ladder | python.org/security |
 | PHP | 1 | freshrss | php.net/security |
 | Qt/C++ | 1 | qbittorrent | qt.io/security |
 | Static Web | 1 | cyberchef | N/A (client-side JS) |
-
-*minio not currently running
 
 ### By Base OS
 
@@ -429,6 +427,7 @@ When migrating to new hardware:
 | 2025-12-04 | Initial BOM creation | Establish baseline for backup/migration strategy |
 | 2025-12-05 | Version update: All "latest" tags replaced with actual versions | Improve security auditing and change tracking |
 | 2025-12-05 | Added unpackerr and recyclarr to arr-stack | Automatic RAR extraction and quality profile management |
+| 2025-12-05 | MinIO restarted and version documented (2025-09-07) | Service now operational |
 
 ### Update Process
 
