@@ -28,7 +28,7 @@ This arr-stack deployment exists as a **learning laboratory for Docker networkin
 
 ## System Architecture
 
-### Service Stack (10 containers)
+### Service Stack (12 containers)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -44,7 +44,7 @@ This arr-stack deployment exists as a **learning laboratory for Docker networkin
          ┌───────────────┐    ┌──────────────────┐
          │    Gluetun    │    │   Arr Services   │
          │  (VPN Gateway)│    │                  │
-         │  Italy/PIA    │    │ • Sonarr  (TV)   │
+         │  Germany/PIA  │    │ • Sonarr  (TV)   │
          └───────────────┘    │ • Radarr  (Movies)│
                 ↓             │ • Lidarr  (Music) │
          ┌──────────────┐    │ • Readarr (Books) │
@@ -52,6 +52,8 @@ This arr-stack deployment exists as a **learning laboratory for Docker networkin
          │ (shared net) │    │ • Bazarr  (Subs)  │
          └──────────────┘    │ • Jellyseerr (Requests)│
                              │ • FlareSolverr    │
+                             │ • Unpackerr (RAR extraction)│
+                             │ • Recyclarr (Quality profiles)│
                              └──────────────────┘
 ```
 
@@ -69,10 +71,10 @@ This arr-stack deployment exists as a **learning laboratory for Docker networkin
 - Port 8085 exposed on Gluetun for external access
 
 **3. VPN Routing**
-- Gluetun establishes OpenVPN tunnel to PIA (Italy)
+- Gluetun establishes OpenVPN tunnel to PIA (Germany - Frankfurt)
 - qBittorrent traffic routes through VPN
 - Port forwarding: Dynamic (currently 30079)
-- DNS: Google DNS (8.8.8.8) to avoid Cloudflare blocks
+- DNS: Local DNS (192.168.101.200) configured for network integration
 
 ---
 
@@ -91,6 +93,8 @@ This arr-stack deployment exists as a **learning laboratory for Docker networkin
 | **Bazarr** | https://bazarr.a0a0.org | 6767 | ✅ Working | Subtitle automation |
 | **Jellyseerr** | https://jellyseerr.a0a0.org | 5055 | ✅ Working | Request management & media discovery |
 | **FlareSolverr** | - | 8191 | ✅ Working | Cloudflare bypass |
+| **Unpackerr** | - | - | ✅ Working | Automatic RAR/ZIP extraction from downloads |
+| **Recyclarr** | - | - | ✅ Working | Automated quality profile management |
 
 ### ⚠️ Known Issues
 
@@ -151,6 +155,42 @@ DOMAIN=a0a0.org
 OPENVPN_USER=<PIA username>
 OPENVPN_PASSWORD=<PIA password>
 ```
+
+### UID/GID Behavior (Important Quirks)
+
+**Standard Expectation:** PUID=568, PGID=568 set in `.env` should apply to all containers.
+
+**Reality:** Some containers ignore or override these settings.
+
+| Service | Actual UID:GID | Behavior | Image Source | Notes |
+|---------|---------------|----------|--------------|-------|
+| qBittorrent | Respects 568:568 | ✅ Works as expected | LinuxServer.io | |
+| Sonarr | Respects 568:568 | ✅ Works as expected | LinuxServer.io | |
+| Prowlarr | Respects 568:568 | ✅ Works as expected | LinuxServer.io | |
+| Lidarr | Respects 568:568 | ✅ Works as expected | LinuxServer.io | |
+| **Radarr** | **abc:911** | ⚠️ Ignores PUID/PGID | LinuxServer.io | Adds supplementary group 1000 for file access |
+| **Bazarr** | **abc:911** | ⚠️ Ignores PUID/PGID | LinuxServer.io | Adds supplementary group 1000 for file access |
+| **Readarr** | **hotio:1000** | ⚠️ Hardcoded in compose | hotio | Cannot be overridden - image limitation |
+| Jellyseerr | Respects 568:568 | ✅ Works as expected | fallenbagel | |
+| FlareSolverr | N/A | No file writes | FlareSolverr | |
+| Unpackerr | Respects 568:568 | ✅ Works as expected | golift | |
+| Recyclarr | Respects 568:568 | ✅ Works as expected | recyclarr | |
+
+**Practical Impact:**
+- Files written by Radarr/Bazarr owned by 911:911, but readable by group 1000
+- Files written by Readarr owned by 1000:1000
+- Mixed ownership in `/mnt/zpool/Media/` directories is expected behavior
+- As long as all containers can read/write media files, system works
+
+**Workaround:**
+- Ensure media directories have permissive group permissions (e.g., 775)
+- Accept that different services run as different UIDs (can't fix container images)
+- Monitor for permission errors in logs if files become inaccessible
+
+**Why This Happens:**
+- LinuxServer.io images (Radarr/Bazarr) have internal logic that sometimes overrides PUID/PGID
+- hotio images (Readarr) use hardcoded UID 1000
+- No way to fix without modifying container images themselves
 
 ### Media Paths
 
@@ -447,25 +487,33 @@ sudo docker compose logs -f sonarr
 
 ```
 arr-stack/
-├── compose.yaml          # Main compose file (10 services)
-├── .env                  # Environment variables (PUID, TZ, DOMAIN)
+├── compose.yaml          # Main compose file (12 services)
+├── .env                  # Environment variables (PUID, TZ, DOMAIN, VPN config)
 ├── README.md             # This file
 └── [Container data on TrueNAS]:
-    /mnt/zpool/Docker/Stacks/arr-stack/
-    ├── gluetun/          # VPN config, port forwarding data
-    ├── qbittorrent/      # qBit settings, resume data
-    ├── sonarr/data/      # TV show database
-    ├── radarr/           # Movie database
-    ├── lidarr/config/    # Music database
-    ├── readarr/config/   # Book database
-    ├── prowlarr/data/    # Indexer configs
-    ├── bazarr/           # Subtitle settings
-    └── jellyseerr/       # Request system database
+    /mnt/zpool/Docker/Stacks/
+    ├── arr-stack/
+    │   ├── gluetun/          # VPN config, port forwarding data
+    │   ├── qbittorrent/      # qBit settings, resume data
+    │   ├── sonarr/data/      # TV show database
+    │   ├── radarr/           # Movie database
+    │   ├── lidarr/config/    # Music database
+    │   ├── readarr/config/   # Book database
+    │   ├── prowlarr/data/    # Indexer configs
+    │   ├── bazarr/           # Subtitle settings
+    │   └── jellyseerr/       # Request system database
+    ├── unpackerr/config/     # RAR extraction config
+    └── recyclarr/            # Quality profile configs
 ```
 
 ---
 
-**Last Updated:** 2025-12-03
+**Last Updated:** 2025-12-05
 **Status:** ✅ All services operational (except Readarr metadata search)
-**Key Changes:** Jellyseerr replaces Overseerr for Jellyfin-native request management
-**Next Steps:** Continue exploring container networking patterns, configure Jellyseerr notifications
+**Key Changes:**
+- Added Unpackerr for automatic RAR/ZIP extraction
+- Added Recyclarr for automated quality profile management
+- Moved VPN configuration from compose.yaml to .env file
+- Changed VPN server: Italy → Germany (Frankfurt)
+- Changed DNS: 8.8.8.8 → 192.168.101.200 (local network DNS)
+- Changed PUID/PGID: 1000 → 568 (TrueNAS apps user)
