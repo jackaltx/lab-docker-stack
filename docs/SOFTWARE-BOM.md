@@ -1,6 +1,6 @@
 # Software Bill of Materials (BOM)
 
-**Generated:** 2025-12-04
+**Generated:** 2025-12-05
 **Host:** truenas.a0a0.org (192.168.40.6)
 **Purpose:** Inventory for backup/migration strategy, security auditing, and disaster recovery
 
@@ -23,27 +23,30 @@
 
 | Container | Image | Version | Base OS | Technology | Registry | Networks |
 |-----------|-------|---------|---------|------------|----------|----------|
-| qbittorrent | linuxserver/qbittorrent | latest | Alpine 3.22 | Qt/libtorrent | lscr.io | gluetun (network_mode) |
-| sonarr | linuxserver/sonarr | latest | Alpine 3.22 | .NET/Mono | lscr.io | backend_media |
-| radarr | linuxserver/radarr | latest | Alpine 3.22 | .NET/Mono | lscr.io | backend_media |
-| lidarr | linuxserver/lidarr | latest | Alpine 3.22 | .NET/Mono | lscr.io | backend_media |
-| readarr | hotio/readarr | latest | Alpine 3.22 | .NET/Mono | ghcr.io | backend_media |
-| bazarr | linuxserver/bazarr | latest | Alpine 3.22 | Python | lscr.io | backend_media |
-| prowlarr | linuxserver/prowlarr | latest | Alpine 3.22 | .NET/Mono | lscr.io | backend_media |
-| jellyseerr | fallenbagel/jellyseerr | latest | Alpine 3.22 | Node.js | docker.io | backend_media |
-| gluetun | qmcgaw/gluetun | latest | Alpine 3.22 | Go | docker.io | backend_media |
-| flaresolverr | flaresolverr/flaresolverr | latest | Debian 12 | Python/Chromium | ghcr.io | backend_media |
+| qbittorrent | linuxserver/qbittorrent | 5.1.4-r0-ls429 | Alpine 3.22 | Qt/libtorrent | lscr.io | gluetun (network_mode) |
+| sonarr | linuxserver/sonarr | 4.0.16.2944-ls299 | Alpine 3.22 | .NET/Mono | lscr.io | backend_media |
+| radarr | linuxserver/radarr | 6.0.4.10291-ls288 | Alpine 3.22 | .NET/Mono | lscr.io | backend_media |
+| lidarr | linuxserver/lidarr | 3.1.0.4875-ls13 | Alpine 3.22 | .NET/Mono | lscr.io | backend_media |
+| readarr | hotio/readarr | 0.4.18.2805 | Alpine 3.22 | .NET/Mono | ghcr.io | backend_media |
+| bazarr | linuxserver/bazarr | 1.5.3-ls326 | Alpine 3.22 | Python | lscr.io | backend_media |
+| prowlarr | linuxserver/prowlarr | 2.3.0.5236-ls133 | Alpine 3.22 | .NET/Mono | lscr.io | backend_media |
+| jellyseerr | fallenbagel/jellyseerr | 2.7.3 | Alpine 3.22 | Node.js | docker.io | backend_media |
+| gluetun | qmcgaw/gluetun | latest (c25c9f6) | Alpine 3.22.2 | Go | docker.io | backend_media |
+| flaresolverr | flaresolverr/flaresolverr | v3.4.6 | Debian 12 | Python/Chromium | ghcr.io | backend_media |
+| unpackerr | golift/unpackerr | 0.14.5 | Alpine 3.22 | Go | docker.io | backend_media |
+| recyclarr | recyclarr/recyclarr | 7.5.2 | Alpine 3.22 | .NET | ghcr.io | backend_media |
 
 **Notes:**
 - qbittorrent routes through gluetun VPN (`network_mode: service:gluetun`)
-- All *arr apps use PUID/PGID 568 (TrueNAS apps user)
+- *arr stack: .env configured for PUID/PGID 568, but some containers override (Radarr/Bazarr→911, Readarr→1000)
 - VPN credentials stored in `/mnt/zpool/Docker/Secrets/arr-stack.env`
+- VPN server: PIA Germany (Frankfurt), DNS: 192.168.101.200
 
 ### Media Streaming
 
 | Container | Image | Version | Base OS | Technology | Registry | Networks |
 |-----------|-------|---------|---------|------------|----------|----------|
-| jellyfin | jellyfin/jellyfin | latest (10.11.3) | Debian 13 | .NET/FFmpeg | docker.io | backend_media |
+| jellyfin | jellyfin/jellyfin | 10.11.3 | Debian 13 | .NET/FFmpeg | docker.io | backend_media |
 
 **Notes:**
 - Jellyfin config owned by root:apps (anomaly - should be apps:apps)
@@ -53,11 +56,11 @@
 
 | Container | Image | Version | Base OS | Technology | Registry | Networks |
 |-----------|-------|---------|---------|------------|----------|----------|
-| traefik | traefik | latest (v3.2) | Alpine 3.22 | Go | docker.io | backend_media, backend_storage, traefik_public |
-| arcane | getarcaneapp/arcane | latest | Debian 13 | Node.js | ghcr.io | backend_storage |
-| homarr | homarr-labs/homarr | latest | Alpine 3.22 | Node.js | ghcr.io | backend_media |
-| dozzle | amir20/dozzle | latest | Alpine 3.22 | Go | docker.io | backend_media |
-| gitea | gitea/gitea | latest | Alpine 3.22 | Go | docker.io | backend_storage |
+| traefik | traefik | v3.6.2 | Alpine 3.22 | Go | docker.io | backend_media, backend_storage, traefik_public |
+| arcane | getarcaneapp/arcane | v1.10.1 | Debian 13 | Node.js | ghcr.io | backend_storage |
+| homarr | homarr-labs/homarr | main | Alpine 3.22 | Node.js | ghcr.io | backend_media |
+| dozzle | amir20/dozzle | v8.14.9 | Alpine 3.22 | Go | docker.io | backend_media |
+| gitea | gitea/gitea | 1.25.2 | Alpine 3.22 | Go | docker.io | backend_storage |
 
 **Notes:**
 - Traefik exposed on ports 80, 443, 8080 (dashboard)
@@ -69,11 +72,11 @@
 
 | Container | Image | Version | Base OS | Technology | Registry | Networks |
 |-----------|-------|---------|---------|------------|----------|----------|
-| freshrss | linuxserver/freshrss | latest | Alpine 3.22 | PHP | lscr.io | backend_media |
-| cyberchef | mpepping/cyberchef | latest | Alpine 3.22 | Nginx/JavaScript | docker.io | backend_storage |
-| ladder | wasi-master/13ft | latest | Alpine 3.19 | Python/Flask | ghcr.io | backend_media |
-| it-tools | corentinth/it-tools | latest | Alpine 3.20 | Node.js/Vue | docker.io | backend_storage |
-| filebrowser | filebrowser/filebrowser | latest | Scratch | Go (static) | docker.io | backend_storage |
+| freshrss | linuxserver/freshrss | 1.27.1-ls288 | Alpine 3.22 | PHP | lscr.io | backend_media |
+| cyberchef | mpepping/cyberchef | 1.29.0 | Alpine 3.22 | Nginx/JavaScript | docker.io | backend_storage |
+| ladder | wasi-master/13ft | 0.3.4 | Alpine 3.19 | Python/Flask | ghcr.io | backend_media |
+| it-tools | corentinth/it-tools | latest (2024-10-22) | Alpine 3.20 | Node.js/Vue | docker.io | backend_storage |
+| filebrowser | filebrowser/filebrowser | 2.50.0 | Scratch | Go (static) | docker.io | backend_storage |
 
 **Notes:**
 - FreshRSS owned by UID/GID 911 (anomaly - not standard apps user)
@@ -97,7 +100,7 @@
 
 | Network | Driver | Scope | Connected Containers | Purpose |
 |---------|--------|-------|---------------------|---------|
-| backend_media | bridge | local | traefik, jellyfin, sonarr, radarr, lidarr, readarr, bazarr, prowlarr, jellyseerr, gluetun, flaresolverr, homarr, dozzle, ladder, freshrss | Media services and *arr stack |
+| backend_media | bridge | local | traefik, jellyfin, sonarr, radarr, lidarr, readarr, bazarr, prowlarr, jellyseerr, gluetun, flaresolverr, unpackerr, recyclarr, homarr, dozzle, ladder, freshrss | Media services and *arr stack |
 | backend_storage | bridge | local | traefik, arcane, gitea, cyberchef, it-tools, filebrowser | Infrastructure and utilities |
 | traefik3_traefik_public | bridge | local | traefik | External ingress |
 
@@ -118,8 +121,8 @@
 
 | Technology | Container Count | Containers | CVE Tracking |
 |------------|----------------|------------|--------------|
-| Go | 6 | traefik, dozzle, gitea, gluetun, filebrowser, minio* | golang.org/security |
-| .NET/Mono | 6 | sonarr, radarr, lidarr, readarr, prowlarr, jellyfin | dotnet.microsoft.com/security |
+| Go | 7 | traefik, dozzle, gitea, gluetun, filebrowser, unpackerr, minio* | golang.org/security |
+| .NET/Mono | 7 | sonarr, radarr, lidarr, readarr, prowlarr, jellyfin, recyclarr | dotnet.microsoft.com/security |
 | Node.js | 4 | arcane, homarr, jellyseerr, it-tools | nodejs.org/security |
 | Python | 3 | bazarr, flaresolverr, ladder | python.org/security |
 | PHP | 1 | freshrss | php.net/security |
@@ -415,7 +418,7 @@ When migrating to new hardware:
 
 ## Compliance & Audit Notes
 
-**Generated:** 2025-12-04
+**Generated:** 2025-12-05
 **Next Review:** Required before each Pull Request
 **Maintained By:** Project owner + Claude Code AI
 
@@ -424,6 +427,8 @@ When migrating to new hardware:
 | Date | Change | Reason |
 |------|--------|--------|
 | 2025-12-04 | Initial BOM creation | Establish baseline for backup/migration strategy |
+| 2025-12-05 | Version update: All "latest" tags replaced with actual versions | Improve security auditing and change tracking |
+| 2025-12-05 | Added unpackerr and recyclarr to arr-stack | Automatic RAR extraction and quality profile management |
 
 ### Update Process
 

@@ -159,16 +159,17 @@ sonarr.a0a0.org → CNAME → docker.a0a0.org → A → 192.168.40.6 → Traefik
 
 ## Current Status
 
-⚠️ **arr-stack is NOT working** (as of 2025-12-01)
+✅ **All services operational** (as of 2025-12-05)
 
-- qBittorrent partially accessible
-- All other arr services (Sonarr, Radarr, Prowlarr, etc.) not accessible
-- VPN/TUN setup with Gluetun causing routing issues
-- **See [ARR-STACK-DEBUG.md](ARR-STACK-DEBUG.md) for full debugging context**
+**arr-stack:** ✅ Working (fixed 2025-12-03, enhanced 2025-12-05)
+- All 12 services deployed and accessible
+- VPN routing through Gluetun working
+- Added Unpackerr and Recyclarr (2025-12-05)
+- Migrated to apps user (PUID=568) for permission alignment
+- ⚠️ Note: Readarr metadata search has upstream issues (manual workaround available)
 
-✅ **All other services working:**
-
-- Traefik, Jellyfin, Homarr, MinIO, FreshRSS, Dozzle, etc.
+**Other services:** ✅ Working
+- Traefik, Jellyfin, Homarr, MinIO, FreshRSS, Dozzle, Arcane, Gitea, etc.
 
 ---
 
@@ -184,20 +185,22 @@ sonarr.a0a0.org → CNAME → docker.a0a0.org → A → 192.168.40.6 → Traefik
 
 ### 2. arr-stack - Media Automation Suite
 
-**Monolithic compose with 10+ services:**
+**Monolithic compose with 12 services:**
 
 | Service | URL | Port | Purpose |
 |---------|-----|------|---------|
-| Gluetun | - | - | VPN gateway (PIA Italy) for torrent traffic |
+| Gluetun | - | - | VPN gateway (PIA Germany/Frankfurt) for torrent traffic |
 | qBittorrent | <https://qbit.a0a0.org> | 8085 | Torrent client (routes via Gluetun VPN) |
 | Sonarr | <https://sonarr.a0a0.org> | 8989 | TV show management |
 | Radarr | <https://radarr.a0a0.org> | 7878 | Movie management |
 | Readarr | <https://readarr.a0a0.org> | 8787 | Book management |
-| Lidarr | <https://lidarr.a0a0.org> | 8787 | Music management |
+| Lidarr | <https://lidarr.a0a0.org> | 8686 | Music management |
 | Prowlarr | <https://prowlarr.a0a0.org> | 9696 | Indexer manager (central tracker config) |
 | Bazarr | <https://bazarr.a0a0.org> | 6767 | Subtitle automation |
-| Overseerr | <https://overseerr.a0a0.org> | 5055 | Media request management |
+| Jellyseerr | <https://jellyseerr.a0a0.org> | 5055 | Media request management (Jellyfin-native) |
 | FlareSolverr | - | - | Cloudflare bypass for indexers |
+| Unpackerr | - | - | Automatic RAR/ZIP extraction from downloads |
+| Recyclarr | - | - | Automated quality profile management |
 
 **Media Paths:**
 
@@ -526,9 +529,9 @@ PGID=568   # See docs/UID-GID-Strategy.md for rationale
 
 ### PUID/PGID Variations
 
-- **arr-stack:** Uses PUID=1000, PGID=1000
+- **arr-stack:** Uses PUID=568, PGID=568 (migrated from 1000:1000 on 2025-12-05)
 - **jellyfin:** Hardcoded PUID=568 in compose file
-- **Mismatch can cause permission issues** when sharing media files
+- **Now aligned** - Both arr-stack and jellyfin use TrueNAS apps user (568:568)
 
 ### Security Considerations
 
@@ -541,9 +544,11 @@ PGID=568   # See docs/UID-GID-Strategy.md for rationale
 ### VPN Configuration
 
 - **Provider:** Private Internet Access (PIA)
-- **Region:** Italy
+- **Region:** Germany (Frankfurt) - changed from Italy on 2025-12-05
 - **Port Forwarding:** Enabled
+- **DNS:** 192.168.101.200 (local network DNS) - changed from 8.8.8.8 on 2025-12-05
 - **Routed Services:** qBittorrent only (via `network_mode: service:gluetun`)
+- **Configuration:** VPN settings moved from compose.yaml to .env file for easier management
 
 ---
 
@@ -726,11 +731,14 @@ docker logs traefik | grep -i error
 
 ## Future Enhancements
 
-**Missing from arr-stack (noted in comments):**
+**Recently Added to arr-stack:**
+
+- ✅ Unpackerr (automatic RAR extraction) - Added 2025-12-05
+- ✅ Recyclarr (quality profile automation) - Added 2025-12-05
+
+**Still Missing:**
 
 - Homepage dashboard
-- Unpackerr (automatic RAR extraction)
-- Recyclarr (quality profile automation)
 
 **Potential Additions:**
 

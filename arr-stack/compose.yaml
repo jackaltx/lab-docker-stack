@@ -8,19 +8,16 @@ services:
   # ==================================================================================
   #
   # - Missing -
-  # 
-  # Highly Recommended:
-  # 2. FlareSolverr - Many indexers need it
-  # 3. Homepage - Nice single dashboard
-  # Nice to Have:
-  # 5. Unpackerr - If you download from private trackers with RAR files
   # 6. Recyclarr - If you want automated quality profile management
   #
 
+  # Claude: Am moving the vpn connecton information to .env for now.  
 
 
   # ==================================================================================
   # Lightweight swiss-army-knife-like VPN client to multiple VPN service providers
+  # This is the interace into qbittorrent. This is the secret-sauce for a kill-switch.
+  #  
   # https://github.com/qdm12/gluetun
   #
   gluetun:
@@ -40,20 +37,20 @@ services:
       - '${DOCKER_ROOT}/Stacks/arr-stack/gluetun:/gluetun'
     env_file:
       - ${DOCKER_ROOT}/Secrets/arr-stack.env
-    environment:
-      - 'TZ=${TZ}'
-      - VPN_SERVICE_PROVIDER=private internet access
-      - VPN_TYPE=openvpn
-      - UPDATER_PERIOD=24h
-      # https://forums.truenas.com/t/guide-to-installing-transmission-with-pia-and-port-forwarding-on-truenas-24-10-electriceel-and-later/22664
-      - PORT_FORWARD_ONLY=true
-      - VPN_PORT_FORWARDING=on
-      #- SERVER_HOSTNAMES=mexico.privacy.network 
-      #- SERVER_HOSTNAMES=italy.privacy.network
-      #- SERVER_HOSTNAMES=canada.privacy.network          # Toronto
-      #- SERVER_HOSTNAMES=us-california.privacy.network   # Los Angeles
-      - SERVER_HOSTNAMES=de-frankfurt.privacy.network     # Amsterdam
-      - DNS_ADDRESS=8.8.8.8  # Google DNS - avoids Cloudflare blocks
+    # environment:
+    #   - 'TZ=${TZ}'
+    #   - VPN_SERVICE_PROVIDER=private internet access
+    #   - VPN_TYPE=openvpn
+    #   - UPDATER_PERIOD=24h
+    #   # https://forums.truenas.com/t/guide-to-installing-transmission-with-pia-and-port-forwarding-on-truenas-24-10-electriceel-and-later/22664
+    #   - PORT_FORWARD_ONLY=true
+    #   - VPN_PORT_FORWARDING=on
+    #   #- SERVER_HOSTNAMES=mexico.privacy.network 
+    #   #- SERVER_HOSTNAMES=italy.privacy.network
+    #   #- SERVER_HOSTNAMES=canada.privacy.network          # Toronto
+    #   #- SERVER_HOSTNAMES=us-california.privacy.network   # Los Angeles
+    #   - SERVER_HOSTNAMES=de-frankfurt.privacy.network     # Amsterdam
+    #   - DNS_ADDRESS=8.8.8.8  # Google DNS - avoids Cloudflare blocks
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
@@ -100,10 +97,6 @@ services:
     restart: unless-stopped
     networks:
       - backend_media  # <-- Traefik can reach it
-    environment:
-      - 'PUID=${PUID}'
-      - 'PGID=${PGID}'
-      - 'TZ=${TZ}'
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
       - '${DOCKER_ROOT}/Stacks/arr-stack/sonarr/data:/config'
@@ -128,10 +121,6 @@ services:
     restart: unless-stopped
     networks:
       - backend_media
-    environment:
-      - 'PUID=${PUID}'
-      - 'PGID=${PGID}'
-      - 'TZ=${TZ}'
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
       - '${DOCKER_ROOT}/Stacks/arr-stack/prowlarr/data:/config'
@@ -147,16 +136,18 @@ services:
   # ==================================================================================
   # Radarr: Movie management and automation.
   #
+  # This service runs as user abc,  however they are nice, the chown and add user 1000
+  # Basically ignore what we pass in
+  #  
+  # $id abc
+  # uid=911(abc) gid=911(abc) groups=911(abc),1000(users)
+
   radarr:
     container_name: radarr
     image: 'lscr.io/linuxserver/radarr:latest'
     restart: unless-stopped
     networks:
       - backend_media
-    environment:
-      - 'PUID=${PUID}'
-      - 'PGID=${PGID}'
-      - 'TZ=${TZ}'
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
       - '${DOCKER_ROOT}/Stacks/arr-stack/radarr:/config'
@@ -174,6 +165,9 @@ services:
   # ==================================================================================
   # Readarr: Book management and automation.
   #
+  # NOTE: this runs as user hotio (1000) and you cannot override
+  #       and they dont fix it, we have to!
+
   readarr:
     image: ghcr.io/hotio/readarr:latest
     container_name: readarr
@@ -181,9 +175,8 @@ services:
     networks:
       - backend_media
     environment:
-      - 'PUID=${PUID}'
-      - 'PGID=${PGID}'
-      - 'TZ=${TZ}'
+      - UID=1000
+      - GID=1000
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
       - '${DOCKER_ROOT}/Stacks/arr-stack/readarr/config:/config' # Stores Readarr's database and configuration
@@ -206,10 +199,6 @@ services:
     restart: unless-stopped
     networks:
       - backend_media
-    environment:
-      - 'PUID=${PUID}'
-      - 'PGID=${PGID}'
-      - 'TZ=${TZ}'
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
       - '${DOCKER_ROOT}/Stacks/arr-stack/lidarr/config:/config' # Stores Readarr's database and configuration
@@ -223,17 +212,17 @@ services:
       - "traefik.http.routers.lidarr.tls.certresolver=letsencrypt"
       - "traefik.http.services.lidarr.loadbalancer.server.port=8686"
 
-  # ==================================================================================
-  # ==================================================================================
-  # ==================================================================================
-  # ==================================================================================
-  # ==================================================================================
-  # ==================================================================================
 
   # 
   # ==================================================================================
   #  Bazarr: handles subtitles for Sonarr and Radarr
   #
+  # This service runs as user abc,  however they are nice, the chown and add user 1000
+  # Basically ignore what we pass in
+  #  
+  # $id abc
+  # uid=911(abc) gid=911(abc) groups=911(abc),1000(users)
+
   bazarr:
     container_name: bazarr
     image: 'lscr.io/linuxserver/bazarr:latest'
@@ -241,9 +230,6 @@ services:
     networks:
       - backend_media
     environment:
-      - 'PUID=${PUID}'
-      - 'PGID=${PGID}'
-      - 'TZ=${TZ}'
       - UMASK_SET=022
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
@@ -270,8 +256,6 @@ services:
       - backend_media
     environment:
       - LOG_LEVEL=debug
-      - 'PUID=${PUID}'
-      - 'PGID=${PGID}'
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
       - '${DOCKER_ROOT}/Stacks/arr-stack/jellyseerr:/app/config'
@@ -294,6 +278,31 @@ services:
     restart: unless-stopped
     networks:
       - backend_media
-    environment:
-      - LOG_LEVEL=info
-      - TZ=${TZ}
+
+  #
+  # ==================================================================================
+  #  Unpackerr is un-archiver
+  #
+  #  SMELL: currently watching the downloads folder, but is has SONARR, RADAAR and READARR
+  #         environment variables to help "configure". However, those will require the API key.
+  #         I will test looking at the qbit download fole
+  #
+
+  unpackerr:
+    image: golift/unpackerr:latest # Or a specific version
+    container_name: unpackerr
+    volumes:
+      - ${DOCKER_ROOT}/Stacks/unpackerr/config:/config
+      - '${MEDIA_ROOT}/Downloads:/downloads'
+    restart: unless-stopped
+
+  #
+  # ==================================================================================
+  #  Unpackerr is un-archiver
+  #
+
+  recyclarr:
+    image: ghcr.io/recyclarr/recyclarr
+    container_name: recyclarr
+    volumes:
+      - ${DOCKER_ROOT}/Stacks/recyclarr:/config

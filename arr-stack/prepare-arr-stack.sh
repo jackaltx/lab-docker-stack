@@ -4,6 +4,10 @@
 # Creates the minimal required directory structure for arr-stack deployment
 #
 
+# Claude: ad flag to create these file with the users in .env.global. 
+# if so, this will need to be sudo.   
+# Useful on sercives machine like treenas, which uses apps:apps.  
+
 set -euo pipefail
 
 # Base paths
@@ -17,6 +21,8 @@ echo "Docker base: ${DOCKER_BASE}"
 echo "Media base: ${MEDIA_BASE}"
 echo ""
 
+# Claude: remind me to refactor this list
+
 # Create config directories
 echo "Creating config directories..."
 mkdir -p "${STACK_DIR}/gluetun"
@@ -28,6 +34,8 @@ mkdir -p "${STACK_DIR}/readarr/config"
 mkdir -p "${STACK_DIR}/lidarr/config"
 mkdir -p "${STACK_DIR}/bazarr"
 mkdir -p "${STACK_DIR}/jellyseerr"
+
+# Claude: Make a flag to bypass, but allert user if file does not exist
 
 # Create media directories
 echo "Creating media directories..."
