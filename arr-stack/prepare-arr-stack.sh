@@ -35,7 +35,7 @@ mkdir -p "${STACK_DIR}/lidarr/config"
 mkdir -p "${STACK_DIR}/bazarr"
 mkdir -p "${STACK_DIR}/jellyseerr"
 
-# Claude: Make a flag to bypass, but allert user if file does not exist
+# Claude: Make a flag to bypass, but alert user if file does not exist
 
 # Create media directories
 echo "Creating media directories..."

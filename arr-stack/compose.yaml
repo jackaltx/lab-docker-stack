@@ -291,10 +291,12 @@ services:
   unpackerr:
     image: golift/unpackerr:latest # Or a specific version
     container_name: unpackerr
+    restart: unless-stopped
+    networks:
+      - backend_media
     volumes:
       - ${DOCKER_ROOT}/Stacks/unpackerr/config:/config
       - '${MEDIA_ROOT}/Downloads:/downloads'
-    restart: unless-stopped
 
   #
   # ==================================================================================
@@ -304,5 +306,8 @@ services:
   recyclarr:
     image: ghcr.io/recyclarr/recyclarr
     container_name: recyclarr
+    restart: unless-stopped
+    networks:
+      - backend_media
     volumes:
       - ${DOCKER_ROOT}/Stacks/recyclarr:/config
