@@ -66,6 +66,54 @@ for tun0, therefore the route installation may fail or may not work as expected.
 
 ---
 
+### #3 - sync-env.sh Should Untrack .env Files
+**Severity:** Medium
+**Component:** sync-env.sh
+**Discovered:** 2025-12-11
+**Status:** Open
+
+**Description:**
+When sync-env.sh adds `**/.env` to .gitignore (protection mode), it doesn't untrack existing .env files that are already in git. This leaves them tracked and showing as modified in git status.
+
+**Impact:**
+- Users see .env files as modified even though they should be ignored
+- Manual intervention required to untrack files
+- Inconsistent behavior - .gitignore added but files still tracked
+
+**Current Behavior:**
+```bash
+# sync-env.sh -p adds to .gitignore but doesn't untrack
+**/.env
+# Files remain tracked, show as modified
+```
+
+**Expected Behavior:**
+```bash
+# sync-env.sh should:
+1. Add **/.env to .gitignore
+2. Run: git rm --cached */**.env (if files are tracked)
+3. Commit both changes together
+```
+
+**Next Steps:**
+- [ ] Review sync-env.sh source code
+- [ ] Add git rm --cached logic when -p flag used
+- [ ] Test with both tracked and untracked .env files
+- [ ] Update documentation
+
+**Workaround:**
+```bash
+# Manual fix (already applied):
+git rm --cached arcane/.env arr-stack/.env filebrowser/.env ...
+git add .gitignore
+git commit -m "chore: untrack .env files"
+```
+
+**References:**
+- Commit: 94d258e (manual untrack fix)
+
+---
+
 ## Closed Issues
 
 _(None yet)_
