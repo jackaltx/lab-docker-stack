@@ -8,6 +8,8 @@ services:
     image: lscr.io/linuxserver/freshrss:latest
     container_name: freshrss
     restart: unless-stopped
+    env_file:
+      - .env
     networks:
       - backend_media
     volumes:

@@ -13,6 +13,8 @@ services:
     # command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD} 
     # command: redis-server --requirepass ${REDIS_PASSWORD} 
     command: redis-server
+    env_file:
+      - .env
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
       - '${DOCKER_ROOT}/Stacks/redis:/data'

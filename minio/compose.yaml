@@ -13,6 +13,7 @@ services:
       - ${DOCKER_ROOT}/Stacks/minio:/data # Persistent storage for MinIO data
     command: server /data --console-address ":9001"
     env_file:
+      - .env
       - ${DOCKER_ROOT}/Secrets/minio.env
     labels:
       - "traefik.enable=true"

@@ -10,6 +10,8 @@ services:
     volumes:
       - ${DOCKER_ROOT}/Stacks/gitea:/data
       - /etc/localtime:/etc/localtime:ro
+    env_file:
+      - .env
     ports:
       - "192.168.40.6:2222:22"  # SSH on 2222 to avoid conflict with host SSH
     networks:

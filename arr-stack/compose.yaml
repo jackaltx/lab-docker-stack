@@ -62,7 +62,7 @@ services:
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
       - '${DOCKER_ROOT}/Stacks/arr-stack/qbittorrent:/config'
-      - '${MEDIA_ROOT}/Downloads:/downloads'
+      - '${MEDIA_ROOT}/downloads:/downloads'
     depends_on:
       - gluetun
     restart: always
@@ -83,11 +83,15 @@ services:
     restart: unless-stopped
     networks:
       - backend_media  # <-- Traefik can reach it
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
       - '${DOCKER_ROOT}/Stacks/arr-stack/sonarr/data:/config'
-      - '${MEDIA_ROOT}/Series:/tv' # (moves to after download)
-      - '${MEDIA_ROOT}/Downloads:/downloads' # (where bt downloads into)
+      - '${MEDIA_ROOT}/series:/tv' # (moves to after download)
+      - '${MEDIA_ROOT}/downloads:/downloads' # (where bt downloads into)
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
@@ -107,6 +111,10 @@ services:
     restart: unless-stopped
     networks:
       - backend_media
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
       - '${DOCKER_ROOT}/Stacks/arr-stack/prowlarr/data:/config'
@@ -134,11 +142,15 @@ services:
     restart: unless-stopped
     networks:
       - backend_media
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
       - '${DOCKER_ROOT}/Stacks/arr-stack/radarr:/config'
-      - '${MEDIA_ROOT}/Movies:/movies' # (moves to after download)
-      - '${MEDIA_ROOT}/Downloads:/downloads' # (where bt downloads into)
+      - '${MEDIA_ROOT}/movies:/movies' # (moves to after download)
+      - '${MEDIA_ROOT}/downloads:/downloads' # (where bt downloads into)
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
@@ -161,13 +173,14 @@ services:
     networks:
       - backend_media
     environment:
-      - UID=1000
-      - GID=1000
+      - UID=${PUID}
+      - GID=${PGID}
+      - TZ=${TZ}
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
       - '${DOCKER_ROOT}/Stacks/arr-stack/readarr/config:/config' # Stores Readarr's database and configuration
-      - '${MEDIA_ROOT}/Books:/books' # (moves to after download)
-      - '${MEDIA_ROOT}/Downloads:/downloads' # (where bt downloads into)
+      - '${MEDIA_ROOT}/books:/books' # (moves to after download)
+      - '${MEDIA_ROOT}/downloads:/downloads' # (where bt downloads into)
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
@@ -185,11 +198,15 @@ services:
     restart: unless-stopped
     networks:
       - backend_media
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
       - '${DOCKER_ROOT}/Stacks/arr-stack/lidarr/config:/config' # Stores Readarr's database and configuration
-      - '${MEDIA_ROOT}/Music:/music' # (moves to after download)
-      - '${MEDIA_ROOT}/Downloads:/downloads' # (where bt downloads into)
+      - '${MEDIA_ROOT}/music:/music' # (moves to after download)
+      - '${MEDIA_ROOT}/downloads:/downloads' # (where bt downloads into)
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
@@ -216,12 +233,15 @@ services:
     networks:
       - backend_media
     environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
       - UMASK_SET=022
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
       - '${DOCKER_ROOT}/Stacks/arr-stack/bazarr:/config'
-      - '${MEDIA_ROOT}/Movies:/movies'
-      - '${MEDIA_ROOT}/Series:/tv'
+      - '${MEDIA_ROOT}/movies:/movies'
+      - '${MEDIA_ROOT}/series:/tv'
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
@@ -252,6 +272,27 @@ services:
       - "traefik.http.routers.jellyseerr.entrypoints=websecure"
       - "traefik.http.routers.jellyseerr.tls.certresolver=letsencrypt"
       - "traefik.http.services.jellyseerr.loadbalancer.server.port=5055"
+
+  
+  profilarr:
+    image: santiagosayshey/profilarr:latest
+    container_name: profilarr
+    networks:
+      - backend_media
+    environment:
+      - LOG_LEVEL=debug
+    volumes:
+      - '/etc/localtime:/etc/localtime:ro'
+      - '${DOCKER_ROOT}/Stacks/arr-stack/profilarr:/config'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=backend_media"
+      - "traefik.http.routers.profilarr.rule=Host(`${PROFILARR_HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.profilarr.entrypoints=websecure"
+      - "traefik.http.routers.profilarr.tls.certresolver=letsencrypt"
+      - "traefik.http.services.profilarr.loadbalancer.server.port=6868"
+
+
 
   
   # ==================================================================================
@@ -290,27 +331,18 @@ services:
       - backend_media
     volumes:
       - ${DOCKER_ROOT}/Stacks/unpackerr/config:/config
-      - '${MEDIA_ROOT}/Downloads:/downloads'
+      - '${MEDIA_ROOT}/downloads:/downloads'
 
   #
   # ==================================================================================
-  #  Unpackerr is un-archiver
-  #
+  #  Recyclarr sychronizes recommended setting 
+  #  I replaced it with profilarr??
 
-  recyclarr:
-    image: ghcr.io/recyclarr/recyclarr
-    container_name: recyclarr
-    restart: unless-stopped
-    networks:
-      - backend_media
-    volumes:
-      - ${DOCKER_ROOT}/Stacks/recyclarr:/config
-
-  profilarr:
-    image: santiagosayshey/profilarr:latest
-    container_name: profilarr
-    restart: unless-stopped
-    environment:
-      - UMASK=022 # Optional, defaults to 022
-    volumes:
-      - ${DOCKER_ROOT}/Stacks/profilarr:/config
+  # recyclarr:
+  #   image: ghcr.io/recyclarr/recyclarr
+  #   container_name: recyclarr
+  #   restart: unless-stopped
+  #   networks:
+  #     - backend_media
+  #   volumes:
+  #     - ${DOCKER_ROOT}/Stacks/recyclarr:/config

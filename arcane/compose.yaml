@@ -3,6 +3,7 @@ services:
     image: ghcr.io/getarcaneapp/arcane:latest
     container_name: arcane
     env_file:
+      - .env
       - ${DOCKER_ROOT}/Secrets/arcane.env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
