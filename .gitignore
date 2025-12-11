@@ -12,3 +12,4 @@
 
 # Protect .env files from commits (added by sync-env.sh -p)
 **/.env
+*.env
