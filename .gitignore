@@ -7,3 +7,4 @@
 
 # Note: Standard .env files ARE tracked (contain PUID/PGID/TZ only)
 # Secrets stored separately in: /mnt/zpool/Docker/Secrets/
+

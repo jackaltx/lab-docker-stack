@@ -16,11 +16,12 @@ services:
     networks:
       - backend_media
     env_file:
+      - .env
       - ${DOCKER_ROOT}/Secrets/homarr.env
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
       - '${DOCKER_ROOT}/Stacks/homarr:/appdata'
-      - '/var/run/docker.sock:/var/run/docker.sock:ro'  # Optional - for Docker integration
+      - '/var/runs/docker.sock:/var/run/docker.sock:ro'  # Optional - for Docker integration
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
