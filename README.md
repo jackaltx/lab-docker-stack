@@ -30,20 +30,21 @@ Part of the larger **[SOLTI](https://github.com/jackaltx/solti-dev)** exploratio
 ## Key Features
 
 - **Reverse Proxy:** Traefik v3 with automatic HTTPS (Let's Encrypt DNS challenge)
-- **Media Automation:** Complete *arr stack (Sonarr, Radarr, Prowlarr, etc.)
-- **Media Streaming:** Jellyfin
-- **Management:** Arcane, Homarr dashboard, Dozzle logs
-- **Storage:** MinIO S3-compatible object storage
-- **Git Hosting:** Gitea self-hosted Git service
+- **Media Automation:** Complete *arr stack with VPN (12+ services: Sonarr, Radarr, Readarr, Lidarr, Prowlarr, Bazarr, Jellyseerr, qBittorrent, and automation tools)
+- **Media Streaming:** Jellyfin with Jellyseerr request management
+- **Management:** Arcane (Docker Compose GUI), Homarr dashboard, Dozzle real-time logs
+- **Storage:** MinIO S3-compatible object storage, FileBrowser web interface
+- **Development:** Gitea self-hosted Git, Redis cache
 - **Utilities:** FreshRSS, 13ft-ladder, IT-Tools, CyberChef
+- **Profile-Based Configuration:** Multi-environment support with git-safe workflows
 
 ## Architecture
 
-- **Network Segmentation:** Separate backend_storage and backend_media networks
+- **Network Segmentation:** Separate `backend_storage` and `backend_media` Docker bridge networks
 - **Secrets Management:** ZFS dataset isolation (see [docs/Secrets-Management.md](docs/Secrets-Management.md))
-- **DNS Domain Pattern:** All services mapped using CNAME to A record uisng single domain providing automated SSL. e.g., `https://jellyfin.example.com`
-- **Simplied Templating** site specific information isolate in env file allows simple name-value customization.
-- **VPN:** Using a Kill-Switch Private Internet Access front end for a private in-machine network. 
+- **DNS Domain Pattern:** Wildcard CNAME to single A record providing automated SSL for all services (e.g., `*.example.com → docker.example.com → 192.168.x.x`)
+- **Profile Templates:** Site-specific configuration isolated in profile files with `sync-env.sh` for multi-environment deployment
+- **VPN Kill-Switch:** Gluetun with Private Internet Access providing network-isolated VPN for torrent traffic 
 
 ## Claude Code Project
 
@@ -59,14 +60,31 @@ Part of the larger **[SOLTI](https://github.com/jackaltx/solti-dev)** exploratio
 
 ## Quick Start
 
+### Profile-Based Configuration
+
+Environment values are managed via **profile templates** that sync to all stack `.env` files:
+
+- **`.env.global`** - Generic defaults for development/main branch
+- **`a0a0.env`** - TrueNAS production values (example)
+- **`dockarr.env`** - VM testing values (example)
+
+Create your own profile or use `.env.global` as a starting point.
+
+### Initial Setup
+
 ```bash
 # Clone repository
-git clone https://github.com/jackaltx/lab-docker-stack.git
-cd lab-docker-stack
+git clone https://github.com/jackaltx/true-lab-docker-stack.git
+cd true-lab-docker-stack
 
-# Configure for your environment
-vim .env.global              # Set DOCKER_ROOT, MEDIA_ROOT, DOMAIN
-./sync-env.sh               # Sync to all stack .env files
+# Option 1: Use generic defaults (for development)
+./sync-env.sh -f .env.global -u
+# Edit values: DOCKER_ROOT, MEDIA_ROOT, DOMAIN, PUID, PGID
+
+# Option 2: Create site-specific profile
+cp .env.global mysite.env
+vim mysite.env                     # Customize for your environment
+./sync-env.sh -f mysite.env -p     # Sync + protect from git commits
 
 # Review deployment guide
 cat docs/Portable-Deployment.md
@@ -75,24 +93,101 @@ cat docs/Portable-Deployment.md
 # https://arcane.example.com
 ```
 
+### Workflow Patterns
+
+**Generic work (committing code):**
+```bash
+./sync-env.sh -f .env.global -u    # Reset to generic + allow commits
+git add . && git commit
+```
+
+**Site-specific testing:**
+```bash
+./sync-env.sh -f mysite.env -p     # Apply site values + protect from commits
+# Deploy and test services
+```
+
 See [docs/Portable-Deployment.md](docs/Portable-Deployment.md) for complete deployment workflow.
+
+## Configuration Management
+
+### sync-env.sh - Profile Manager
+
+Manages environment variables across all stack `.env` files from central profile templates.
+
+**Usage:**
+```bash
+./sync-env.sh -f <template> [-p|-u] [-h]
+
+Options:
+  -f <template>  Source template (REQUIRED: .env.global, a0a0.env, custom.env)
+  -p             Protect: Add **/.env to .gitignore (for site-specific testing)
+  -u             Unprotect: Remove from .gitignore (for committing baseline)
+  -h             Show help
+```
+
+**What it syncs:**
+- PUID, PGID, TZ (user/timezone)
+- DOMAIN (for Traefik routing)
+- DOCKER_ROOT, MEDIA_ROOT (base paths)
+
+**Profile examples included:**
+- `.env.global` - Generic defaults (PUID=1000, example.com, /opt/Docker)
+- `a0a0.env` - TrueNAS production example (PUID=568, a0a0.org, /mnt/zpool)
+- `dockarr.env` - VM testing example (PUID=1000, a0a0.org, ${HOME}/docker_stack)
+
+Create custom profiles for different deployment targets (dev, staging, production).
 
 ## Services
 
 All services accessible via HTTPS with automatic certificates:
 
+### Infrastructure & Management
+
 | Service | URL | Purpose |
 |---------|-----|---------|
 | Traefik | <https://docker.example.com> | Reverse proxy dashboard |
-| Homarr | <https://home.example.com> | Main dashboard |
-| Arcane | <https://arcane.example.com> | Docker management GUI |
-| Jellyfin | <https://jellyfin.example.com> | Media streaming |
-| Overseerr | <https://overseerr.example.com> | Media requests |
-| Gitea | <https://gitea.example.com> | Git hosting |
-| MinIO | <https://minio-true.example.com> | S3 storage console |
-| Dozzle | <https://dozzle.example.com> | Container logs |
+| Arcane | <https://arcane.example.com> | Docker Compose management GUI |
+| Homarr | <https://home.example.com> | Service dashboard |
+| Dozzle | <https://dozzle.example.com> | Real-time container logs |
 
-See [CLAUDE.md](CLAUDE.md#deployed-projects) for complete service list and details.
+### Media Stack (arr-stack)
+
+Complete media automation suite with VPN (Gluetun):
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| Jellyfin | <https://jellyfin.example.com> | Media streaming |
+| Jellyseerr | <https://jellyseerr.example.com> | Media requests |
+| Sonarr | <https://sonarr.example.com> | TV show management |
+| Radarr | <https://radarr.example.com> | Movie management |
+| Readarr | <https://readarr.example.com> | Book management |
+| Lidarr | <https://lidarr.example.com> | Music management |
+| Prowlarr | <https://prowlarr.example.com> | Indexer manager |
+| Bazarr | <https://bazarr.example.com> | Subtitle automation |
+| qBittorrent | <https://qbit.example.com> | Torrent client (via VPN) |
+
+**arr-stack backend services:** Gluetun (VPN), FlareSolverr, Unpackerr, Recyclarr, Profilarr
+
+### Storage & Development
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| MinIO | <https://minio-true.example.com> | S3-compatible object storage |
+| Gitea | <https://gitea.example.com> | Self-hosted Git service |
+| FileBrowser | <https://files.example.com> | Web-based file manager |
+| Redis | - | Development cache instance |
+
+### Utilities
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| FreshRSS | <https://rss.example.com> | RSS feed aggregator |
+| 13ft-ladder | <https://ladder.example.com> | Paywall bypass |
+| IT-Tools | <https://it-tools.example.com> | Developer utilities |
+| CyberChef | <https://cyberchef.example.com> | Data transformation toolkit |
+
+See [CLAUDE.md](CLAUDE.md#deployed-projects) for detailed configuration and deployment notes.
 
 ## Contributing
 
