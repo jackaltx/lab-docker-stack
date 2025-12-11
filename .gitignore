@@ -1,5 +1,6 @@
-# Claude Code configuration
-.claude/
+# Claude Code configuration (except commands)
+.claude/*
+!.claude/commands/
 
 # Local environment overrides (if created)
 **/.env.local
