@@ -1,5 +1,6 @@
-# Claude Code configuration
-.claude/
+# Claude Code configuration (except commands)
+.claude/*
+!.claude/commands/
 
 # Local environment overrides (if created)
 **/.env.local
@@ -8,3 +9,6 @@
 # Note: Standard .env files ARE tracked (contain PUID/PGID/TZ only)
 # Secrets stored separately in: /mnt/zpool/Docker/Secrets/
 
+
+# Protect .env files from commits (added by sync-env.sh -p)
+**/.env

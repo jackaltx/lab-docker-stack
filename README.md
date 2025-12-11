@@ -58,6 +58,34 @@ Part of the larger **[SOLTI](https://github.com/jackaltx/solti-dev)** exploratio
 - **Secrets:** [docs/Secrets-Management.md](docs/Secrets-Management.md) - ZFS dataset strategy
 - **UID/GID:** [docs/UID-GID-Strategy.md](docs/UID-GID-Strategy.md) - Permission management
 
+### Monitoring with Claude Code
+
+This project includes custom slash commands for monitoring and verification when using [Claude Code](https://claude.ai/claude-code).
+
+**Available Commands:**
+
+- **`/stack-status`** - Complete Docker stack health check
+  - Lists all containers with status and uptime
+  - Checks for health issues and errors in logs
+  - Generates timestamped report in `status-reports/`
+  - Identifies services needing attention
+
+- **`/verify-routes`** - Traefik routing verification
+  - Tests DNS resolution for all services
+  - Validates SSL certificates and expiration dates
+  - Checks HTTP/HTTPS connectivity
+  - Identifies configuration mismatches
+  - Generates detailed routing report
+
+**Getting Started with Claude Code:**
+
+1. Sign up for Claude at [claude.ai/claude-code](https://claude.ai/claude-code)
+2. Install the CLI tool following the official documentation
+3. Clone this repository and navigate to the project directory
+4. Run `/stack-status` or `/verify-routes` to generate reports
+
+Reports are saved to `status-reports/` with timestamps for tracking changes over time.
+
 ## Quick Start
 
 ### Profile-Based Configuration
