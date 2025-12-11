@@ -114,6 +114,59 @@ git commit -m "chore: untrack .env files"
 
 ---
 
+### #4 - Main Branch Not Protected from Direct Merges
+**Severity:** Medium
+**Component:** Git workflow / Repository settings
+**Discovered:** 2025-12-11
+**Status:** Open
+
+**Description:**
+The main branch currently accepts direct merges from any branch, not just from the test branch. Desired workflow is: truenas-dev → test → main, but there's no enforcement preventing truenas-dev → main (which happened with PR #8).
+
+**Impact:**
+- Workflow discipline relies on manual process
+- Untested changes could bypass test branch
+- No formal control over main branch stability
+
+**Desired Workflow:**
+```
+truenas-dev (development) → test (validation) → main (stable)
+```
+
+**Current State:**
+- Can merge truenas-dev directly to main (happened with PR #8)
+- No branch protection rules enforced
+- Relies on developer discipline
+
+**Next Steps:**
+- [ ] Research GitHub branch protection rules
+- [ ] Investigate restricting main to only accept PRs from test branch
+- [ ] Check if GitHub allows "required base branch" for PRs
+- [ ] Consider GitHub Actions workflow to enforce branch rules
+- [ ] Document approved workflow in CONTRIBUTING.md or CLAUDE.md
+
+**Possible Solutions:**
+1. **GitHub Branch Protection Rules**
+   - Require pull request reviews before merging
+   - Restrict who can push to main
+   - Require status checks to pass
+
+2. **GitHub Actions Workflow**
+   - CI check that validates PR source branch
+   - Fail if PR to main is not from test branch
+   - Allow override with specific label/approval
+
+3. **Manual Process Documentation**
+   - Document workflow clearly
+   - Add pre-merge checklist
+   - Trust but verify
+
+**References:**
+- PR #8: Merged truenas-dev → main (should have been test → main)
+- Current branch structure: truenas-dev, test, main
+
+---
+
 ## Closed Issues
 
 _(None yet)_
