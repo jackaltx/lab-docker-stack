@@ -89,7 +89,7 @@ services:
       - TZ=${TZ}
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
-      - '${DOCKER_ROOT}/Stacks/arr-stack/sonarr/data:/config'
+      - '${DOCKER_ROOT}/Stacks/arr-stack/sonarr:/config'
       - '${MEDIA_ROOT}/series:/tv' # (moves to after download)
       - '${MEDIA_ROOT}/downloads:/downloads' # (where bt downloads into)
     labels:
@@ -117,7 +117,7 @@ services:
       - TZ=${TZ}
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
-      - '${DOCKER_ROOT}/Stacks/arr-stack/prowlarr/data:/config'
+      - '${DOCKER_ROOT}/Stacks/arr-stack/prowlarr:/config'
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"

@@ -19,8 +19,8 @@ services:
       - backend_media
       - traefik_public
     ports:
-      - "${TRAEFIK_BIND_IP}:80:8080"  # Host 8080 → Container 8080 (dashboard)
-      - "${TRAEFIK_BIND_IP}:443:443"   # Host 8443 → Container 443 (HTTPS services)
+      - "${TRAEFIK_BIND_IP}:80:8080"  # Host 80 → Container 8080 (dashboard)
+      - "${TRAEFIK_BIND_IP}:443:443"   # Host 443 → Container 443 (HTTPS services)
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ${DOCKER_ROOT}/Stacks/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
