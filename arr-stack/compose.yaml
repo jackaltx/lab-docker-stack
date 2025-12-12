@@ -178,7 +178,7 @@ services:
       - TZ=${TZ}
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
-      - '${DOCKER_ROOT}/Stacks/arr-stack/readarr/config:/config' # Stores Readarr's database and configuration
+      - '${DOCKER_ROOT}/Stacks/arr-stack/readarr:/config' # Stores Readarr's database and configuration
       - '${MEDIA_ROOT}/books:/books' # (moves to after download)
       - '${MEDIA_ROOT}/downloads:/downloads' # (where bt downloads into)
     labels:
@@ -204,7 +204,7 @@ services:
       - TZ=${TZ}
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
-      - '${DOCKER_ROOT}/Stacks/arr-stack/lidarr/config:/config' # Stores Readarr's database and configuration
+      - '${DOCKER_ROOT}/Stacks/arr-stack/lidarr:/config' # Stores Readarr's database and configuration
       - '${MEDIA_ROOT}/music:/music' # (moves to after download)
       - '${MEDIA_ROOT}/downloads:/downloads' # (where bt downloads into)
     labels:
@@ -330,7 +330,7 @@ services:
     networks:
       - backend_media
     volumes:
-      - ${DOCKER_ROOT}/Stacks/unpackerr/config:/config
+      - ${DOCKER_ROOT}/Stacks/arr-stack/unpackerr:/config
       - '${MEDIA_ROOT}/downloads:/downloads'
 
   #
@@ -345,4 +345,4 @@ services:
   #   networks:
   #     - backend_media
   #   volumes:
-  #     - ${DOCKER_ROOT}/Stacks/recyclarr:/config
+  #     - ${DOCKER_ROOT}/Stacks/arr-stack:/config

@@ -13,7 +13,7 @@ services:
     env_file:
       - .env
     ports:
-      - "192.168.40.6:2222:22"  # SSH on 2222 to avoid conflict with host SSH
+      - "${GITEA_BIND_IP}:2222:22"  # SSH on 2222 to avoid conflict with host SSH
     networks:
       - backend_storage
     labels:
@@ -25,5 +25,3 @@ services:
       - "traefik.http.routers.gitea.tls.certresolver=letsencrypt"
       - "traefik.http.services.gitea.loadbalancer.server.port=3000"
     restart: unless-stopped
-
-

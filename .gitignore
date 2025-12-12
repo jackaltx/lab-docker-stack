@@ -14,3 +14,6 @@
 # **/.env
 # *.env
 # Use .env.local or .env.secrets for actual secrets (these ARE gitignored)
+
+# Protect .env files from commits (added by sync-env.sh -p)
+**/.env
