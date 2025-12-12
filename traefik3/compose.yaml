@@ -25,7 +25,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ${DOCKER_ROOT}/Stacks/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ${DOCKER_ROOT}/Stacks/traefik/acme:/acme
-      - ${DOCKER_ROOT}/Stacks/traefik/access.log:/var/log/traefik/access.log
+      - ${DOCKER_ROOT}/Stacks/traefik/log:/var/log/traefik
       - /etc/localtime:/etc/localtime:ro
     env_file:
       - .env
