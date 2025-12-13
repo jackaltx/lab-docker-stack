@@ -1,12 +1,21 @@
 ---
 networks:
   backend_storage:
-    external: true
+    name: backend_storage
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.42.0/24
 
   backend_media:
-    external: true
+    name: backend_media
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.43.0/24  # Matches arr-stack FIREWALL_OUTBOUND_SUBNETS
 
-  traefik_public:  # Create a bridge network with internet access
+  traefik_public:
+    name: traefik_public
     driver: bridge
 
 services:

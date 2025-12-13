@@ -91,11 +91,11 @@ All services route through **Traefik v3.2** with:
 
 ### Network Segmentation
 
-**backend_storage** - Infrastructure services
+**backend_storage** - Infrastructure services (172.20.42.0/24)
 
 - Traefik, MinIO, Arcane, IT-Tools, CyberChef
 
-**backend_media** - Media & application services
+**backend_media** - Media & application services (172.20.43.0/24)
 
 - Traefik, arr-stack (all components), Jellyfin, Homarr, FreshRSS, Dozzle, 13ft-ladder
 
@@ -103,7 +103,12 @@ All services route through **Traefik v3.2** with:
 
 - Bridge network for external connectivity
 
-**Important:** All networks use `external: true` - must be created manually before deployment.
+**Network Creation:**
+
+- Networks are automatically created by Traefik compose on first deployment
+- Explicit subnets prevent Docker random allocation
+- Other services reference networks as `external: true`
+- No manual `docker network create` needed
 
 ### Domain Pattern
 
@@ -301,13 +306,14 @@ sudo docker compose up -d
 TrueNAS Scale uses its own user management - add docker group via GUI:
 **Credentials → Local Users → Edit lavadmin → Auxiliary Groups → docker**
 
-### Create Required Networks (One-Time Setup)
+### Network Creation (Automatic)
 
-```bash
-ssh lavadmin@truenas.a0a0.org
-sudo docker network create backend_storage
-sudo docker network create backend_media
-```
+Networks are automatically created when Traefik is deployed:
+- `backend_storage` (172.20.42.0/24)
+- `backend_media` (172.20.43.0/24)
+- `traefik_public`
+
+**No manual `docker network create` needed** - Traefik's compose file handles this.
 
 ### Deploy a Stack
 
@@ -523,9 +529,8 @@ PGID=568   # See docs/UID-GID-Strategy.md for rationale
 
 ### Deployment Dependencies
 
-1. **Networks must exist first** (see "Create Required Networks")
-2. **Deploy Traefik before other services** (provides routing)
-3. **arr-stack:** Gluetun must start before qBittorrent
+1. **Deploy Traefik first** - Creates networks (backend_storage, backend_media, traefik_public) and provides routing
+2. **arr-stack:** Gluetun must start before qBittorrent
 
 ### PUID/PGID Variations
 
@@ -548,6 +553,7 @@ PGID=568   # See docs/UID-GID-Strategy.md for rationale
 - **Port Forwarding:** Enabled
 - **DNS:** 192.168.101.200 (local network DNS) - changed from 8.8.8.8 on 2025-12-05
 - **Routed Services:** qBittorrent only (via `network_mode: service:gluetun`)
+- **Firewall:** `FIREWALL_OUTBOUND_SUBNETS=172.20.43.0/24` (matches backend_media subnet defined in Traefik)
 - **Configuration:** VPN settings moved from compose.yaml to .env file for easier management
 
 ---
