@@ -1,4 +1,4 @@
-# TrueNAS Docker Lab Stack
+# Docker Lab Stack
 
 > **⚠️ EXPERIMENTAL - VERY EARLY STAGE**
 >
@@ -6,7 +6,7 @@
 >
 > **USE AT YOUR OWN RISK**
 
-Self-hosted Docker infrastructure on TrueNAS Scale (should work on any Debian-based system), bypassing built-in Apps for control and portability.
+Self-hosted Docker infrastructure for many linux docker hosts. Development is tested on generic Debian 12 VM.  As well as, a TrueNAS Scale host, bypassing built-in Apps for control and portability.
 
 ## Overview
 
@@ -25,12 +25,58 @@ Part of the larger **[SOLTI](https://github.com/jackaltx/solti-dev)** exploratio
 - Full control over compose files and configurations
 - Standard Docker workflows (no proprietary formats)
 - Simplify migration and version control
-- Better suited for complex multi-service stacks (a purty way to day  "Rats, I already used that port on this machine.")
+
+## Prerequisites
+
+Before deployment, ensure you have:
+
+- **Docker & Docker Compose:** Version 20.10+ and Compose V2
+- **Static IP:** Dedicated IP address for the Docker host
+- **DNS Provider:** Account with Linode, Cloudflare, or similar (for Let's Encrypt DNS challenge)
+- **Domain Name:** Registered domain with wildcard DNS configured
+  - Example: `*.example.com` → CNAME → `docker.example.com` → A record → your static IP
+- **Storage:** Minimum 100GB for Docker volumes, additional space for media
+- **System Requirements:** 8GB+ RAM recommended for full stack
+
+**Network Requirements:**
+
+- Ports 80/443 available for Traefik
+- No conflicting reverse proxies on the host
+
+## Deployment Order
+
+⚠️ **CRITICAL: Deploy Traefik First**
+
+Traefik must be deployed before any other services:
+
+1. Creates required Docker networks (`backend_storage`, `backend_media`, `traefik_public`)
+2. Provides reverse proxy for all service URLs
+3. Manages SSL certificates via Let's Encrypt
+
+```bash
+cd traefik3
+docker compose up -d
+# Wait for networks to be created, then deploy other services
+```
+
+## Networking Features
+
+### Dynamic Reverse proxy using certificates
+
+By using a DNS service, such as Linode or Cloudflare, the lab can use names and not have to share. This is
+better suited for complex multi-service stacks (avoiding the "Rats, I already used that port on this machine.")
+
+The containers are on a private network with access via the proxy.  The container can initiate conversation externally, but they bind to an internal address.  Traefik Proxy will process the containers labels and
+provide access.
+
+### Network isolation via VPN
+
+The *arr stack with VPN is used to put a client behind a Kill-Switch. Controlling access by coupling the network of "file sharing" application running a network bridge segment. If the VPN fail, the sharing stops.
 
 ## Key Features
 
-- **Reverse Proxy:** Traefik v3 with automatic HTTPS (Let's Encrypt DNS challenge)
-- **Media Automation:** Complete *arr stack with VPN (12+ services: Sonarr, Radarr, Readarr, Lidarr, Prowlarr, Bazarr, Jellyseerr, qBittorrent, and automation tools)
+- **Reverse Proxy:** Traefik v3 with automated HTTPS (Let's Encrypt DNS challenge)
+- **Media Automation:** Complete *arr stack with VPN
 - **Media Streaming:** Jellyfin with Jellyseerr request management
 - **Management:** Arcane (Docker Compose GUI), Homarr dashboard, Dozzle real-time logs
 - **Storage:** MinIO S3-compatible object storage, FileBrowser web interface
@@ -44,7 +90,7 @@ Part of the larger **[SOLTI](https://github.com/jackaltx/solti-dev)** exploratio
 - **Secrets Management:** ZFS dataset isolation (see [docs/Secrets-Management.md](docs/Secrets-Management.md))
 - **DNS Domain Pattern:** Wildcard CNAME to single A record providing automated SSL for all services (e.g., `*.example.com → docker.example.com → 192.168.x.x`)
 - **Profile Templates:** Site-specific configuration isolated in profile files with `sync-env.sh` for multi-environment deployment
-- **VPN Kill-Switch:** Gluetun with Private Internet Access providing network-isolated VPN for torrent traffic 
+- **VPN Kill-Switch:** Gluetun with Private Internet Access providing network-isolated VPN for torrent traffic
 
 ## Claude Code Project
 
@@ -86,56 +132,50 @@ This project includes custom slash commands for monitoring and verification when
 
 Reports are saved to `status-reports/` with timestamps for tracking changes over time.
 
+**Note:** Status reports are saved to `status-reports/` with timestamps (YYYY-MM-DD-HHMM.md). This directory is git-ignored for local monitoring - commit reports manually if needed for documentation.
+
 ## Quick Start
 
-### Profile-Based Configuration
+### Quick Start - Recommended Workflow
 
-Environment values are managed via **profile templates** that sync to all stack `.env` files:
-
-- **`.env.global`** - Generic defaults for development/main branch
-- **`a0a0.env`** - TrueNAS production values (example)
-- **`dockarr.env`** - VM testing values (example)
-
-Create your own profile or use `.env.global` as a starting point.
-
-### Initial Setup
+**Recommended:** Create your own branch to isolate site-specific configuration:
 
 ```bash
-# Clone repository
+# Clone and create your deployment branch
 git clone https://github.com/jackaltx/true-lab-docker-stack.git
 cd true-lab-docker-stack
+git checkout -b my-deployment
 
-# Option 1: Use generic defaults (for development)
-./sync-env.sh -f .env.global -u
-# Edit values: DOCKER_ROOT, MEDIA_ROOT, DOMAIN, PUID, PGID
+# Edit global configuration
+vim .env.global
+# Update: DOMAIN, DOCKER_ROOT, MEDIA_ROOT, PUID, PGID
 
-# Option 2: Create site-specific profile
-cp .env.global mysite.env
-vim mysite.env                     # Customize for your environment
-./sync-env.sh -f mysite.env -p     # Sync + protect from git commits
+# Sync to all stack .env files
+./sync-env.sh -f .env.global
 
-# Review deployment guide
-cat docs/Portable-Deployment.md
+# Deploy Traefik first (creates networks)
+cd traefik3
+docker compose up -d
 
-# Services managed via Arcane GUI
+# Deploy other services via Arcane GUI
 # https://arcane.example.com
 ```
 
-### Workflow Patterns
+**Alternative (multi-site):** Use profile-based configuration for multiple environments:
 
-**Generic work (committing code):**
 ```bash
-./sync-env.sh -f .env.global -u    # Reset to generic + allow commits
-git add . && git commit
+# Create site-specific profile
+cp .env.global mysite.env
+vim mysite.env
+
+# Sync with protection (prevents committing secrets)
+./sync-env.sh -f mysite.env -p
+
+# For generic work (committing code):
+./sync-env.sh -f .env.global -u
 ```
 
-**Site-specific testing:**
-```bash
-./sync-env.sh -f mysite.env -p     # Apply site values + protect from commits
-# Deploy and test services
-```
-
-See [docs/Portable-Deployment.md](docs/Portable-Deployment.md) for complete deployment workflow.
+See [docs/Portable-Deployment.md](docs/Portable-Deployment.md) for advanced multi-environment workflows.
 
 ## Configuration Management
 
@@ -144,6 +184,7 @@ See [docs/Portable-Deployment.md](docs/Portable-Deployment.md) for complete depl
 Manages environment variables across all stack `.env` files from central profile templates.
 
 **Usage:**
+
 ```bash
 ./sync-env.sh -f <template> [-p|-u] [-h]
 
@@ -154,12 +195,24 @@ Options:
   -h             Show help
 ```
 
-**What it syncs:**
-- PUID, PGID, TZ (user/timezone)
-- DOMAIN (for Traefik routing)
-- DOCKER_ROOT, MEDIA_ROOT (base paths)
+**What it does:**
+
+- Automatically discovers all stack directories (containing both `compose.yaml` and `.env`)
+- Reads all variables from the template file
+- Updates matching variables in each stack's `.env` file
+- Only updates variables that already exist in the target (doesn't add new ones)
+- Optionally manages `.gitignore` to protect/unprotect `.env` files
+
+**Standard template variables:**
+
+- `PUID`, `PGID`, `TZ` - User ID, group ID, timezone
+- `DOMAIN` - Base domain for Traefik routing
+- `DOCKER_ROOT`, `MEDIA_ROOT` - Storage paths
+
+Add custom variables to your template as needed - script syncs everything.
 
 **Profile examples included:**
+
 - `.env.global` - Generic defaults (PUID=1000, example.com, /opt/Docker)
 - `a0a0.env` - TrueNAS production example (PUID=568, a0a0.org, /mnt/zpool)
 - `dockarr.env` - VM testing example (PUID=1000, a0a0.org, ${HOME}/docker_stack)
@@ -195,7 +248,15 @@ Complete media automation suite with VPN (Gluetun):
 | Bazarr | <https://bazarr.example.com> | Subtitle automation |
 | qBittorrent | <https://qbit.example.com> | Torrent client (via VPN) |
 
-**arr-stack backend services:** Gluetun (VPN), FlareSolverr, Unpackerr, Recyclarr, Profilarr
+**arr-stack backend services:**
+
+- Gluetun (VPN kill-switch for torrent traffic)
+- FlareSolverr (Cloudflare bypass)
+- Unpackerr (automatic archive extraction)
+- Recyclarr (TRaSH Guides quality profile sync)
+- Profilarr (custom profile management)
+
+See [arr-stack/README.md](arr-stack/README.md) for detailed configuration and networking.
 
 ### Storage & Development
 
@@ -216,6 +277,38 @@ Complete media automation suite with VPN (Gluetun):
 | CyberChef | <https://cyberchef.example.com> | Data transformation toolkit |
 
 See [CLAUDE.md](CLAUDE.md#deployed-projects) for detailed configuration and deployment notes.
+
+## Troubleshooting
+
+**Service not accessible:**
+
+- Check Traefik dashboard: <https://docker.example.com>
+- Verify container running: `docker ps | grep {service}`
+- Review logs via Dozzle: <https://dozzle.example.com>
+
+**SSL certificate issues:**
+
+- Check Traefik logs for Let's Encrypt errors
+- Verify DNS records exist for `*.example.com`
+- Ensure DNS provider API token is correct in `.env`
+
+**VPN not working (qBittorrent):**
+
+```bash
+# Check Gluetun connection
+docker logs gluetun | grep "connected"
+
+# Verify qBittorrent routes through VPN
+docker exec qbittorrent curl ifconfig.me  # Should show VPN IP
+```
+
+**Permission errors on media files:**
+
+- Verify PUID/PGID match file ownership
+- Check: `ls -la /path/to/media`
+- Most services use PUID=1000 or 568 (TrueNAS apps user)
+
+For comprehensive troubleshooting, see [CLAUDE.md - Troubleshooting](CLAUDE.md#troubleshooting).
 
 ## Contributing
 

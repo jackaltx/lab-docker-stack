@@ -14,3 +14,4 @@
 # **/.env
 # *.env
 # Use .env.local or .env.secrets for actual secrets (these ARE gitignored)
+status-reports/

@@ -90,11 +90,26 @@ fi
 # Source the template
 source "$TEMPLATE_FILE"
 
-# List of variables to sync
-SYNC_VARS=("PUID" "PGID" "TZ" "DOMAIN" "DOCKER_ROOT" "MEDIA_ROOT")
+# Extract variable names from template file
+SYNC_VARS=()
+while IFS='=' read -r key value; do
+    # Skip empty lines and comments
+    [[ -z "$key" || "$key" =~ ^[[:space:]]*# ]] && continue
+    # Strip leading/trailing whitespace from key
+    key="${key#"${key%%[![:space:]]*}"}"
+    key="${key%"${key##*[![:space:]]}"}"
+    # Add to array if not empty
+    [[ -n "$key" ]] && SYNC_VARS+=("$key")
+done < "$TEMPLATE_FILE"
 
-# Target directories
-TARGETS=("freshrss" "traefik3" "arcane" "gitea" "homarr" "jellyfin" "minio" "arr-stack" "filebrowser")
+# Auto-discover target directories (containing both compose.yaml/yml and .env)
+TARGETS=()
+for dir in */; do
+    dir="${dir%/}"
+    if [[ (-f "${dir}/compose.yaml" || -f "${dir}/compose.yml") && -f "${dir}/.env" ]]; then
+        TARGETS+=("$dir")
+    fi
+done
 
 echo "Syncing from $TEMPLATE_FILE to stack .env files..."
 echo ""
