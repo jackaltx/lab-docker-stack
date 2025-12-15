@@ -6,22 +6,13 @@ networks:
 services:
   #
   # ==================================================================================
-  #
-  # - Missing -
-  # 6. Recyclarr - If you want automated quality profile management
-  #
-
-  # Claude: Am moving the vpn connecton information to .env for now.  
-
-
-  # ==================================================================================
   # Lightweight swiss-army-knife-like VPN client to multiple VPN service providers
   # This is the interace into qbittorrent. This is the secret-sauce for a kill-switch.
   #  
   # https://github.com/qdm12/gluetun
   #
   gluetun:
-    image: qmcgaw/gluetun
+    image: qmcgaw/gluetun:latest
     container_name: gluetun
     hostname: gluetun  # used by the arr's for reference ??
     networks:
@@ -36,6 +27,7 @@ services:
       - '/etc/localtime:/etc/localtime:ro'
       - '${DOCKER_ROOT}/Stacks/arr-stack/gluetun:/gluetun'
     env_file:
+      - .env
       - ${DOCKER_ROOT}/Secrets/arr-stack.env
     labels:
       - "traefik.enable=true"
@@ -122,8 +114,6 @@ services:
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
       - '${DOCKER_ROOT}/Stacks/arr-stack/radarr:/config'
-      - '${MEDIA_ROOT}/movies:/movies' # (moves to after download)
-      - '${MEDIA_ROOT}/downloads:/downloads' # (where bt downloads into)
       - '${MEDIA_ROOT}:/media'
     labels:
       - "traefik.enable=true"
@@ -180,8 +170,7 @@ services:
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
       - '${DOCKER_ROOT}/Stacks/arr-stack/readarr:/config' # Stores Readarr's database and configuration
-      - '${MEDIA_ROOT}/books:/books' # (moves to after download)
-      - '${MEDIA_ROOT}/downloads:/downloads' # (where bt downloads into)
+      - '${MEDIA_ROOT}:/media'
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
@@ -206,8 +195,7 @@ services:
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
       - '${DOCKER_ROOT}/Stacks/arr-stack/lidarr:/config' # Stores Readarr's database and configuration
-      - '${MEDIA_ROOT}/music:/music' # (moves to after download)
-      - '${MEDIA_ROOT}/downloads:/downloads' # (where bt downloads into)
+      - '${MEDIA_ROOT}:/media'
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
@@ -241,8 +229,7 @@ services:
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
       - '${DOCKER_ROOT}/Stacks/arr-stack/bazarr:/config'
-      - '${MEDIA_ROOT}/movies:/movies'
-      - '${MEDIA_ROOT}/series:/tv'
+      - '${MEDIA_ROOT}:/media'
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_media"
