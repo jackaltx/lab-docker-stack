@@ -92,7 +92,7 @@ source "$TEMPLATE_FILE"
 
 # Extract variable names from template file
 SYNC_VARS=()
-while IFS='=' read -r key value; do
+while IFS='=' read -r key value || [[ -n "$key" ]]; do
     # Skip empty lines and comments
     [[ -z "$key" || "$key" =~ ^[[:space:]]*# ]] && continue
     # Strip leading/trailing whitespace from key
