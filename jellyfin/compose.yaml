@@ -16,10 +16,11 @@ services:
       - ${DOCKER_ROOT}/Stacks/jellyfin/config:/config
       - ${DOCKER_ROOT}/Stacks/jellyfin/cache:/cache
       #
-      - ${MEDIA_ROOT}/movies:/media/movies
-      - ${MEDIA_ROOT}/music:/media/music
-      - ${MEDIA_ROOT}/series:/media/series
-      - ${MEDIA_ROOT}/music-lessons:/media/music-lessons
+      # - ${MEDIA_ROOT}/movies:/media/movies
+      # - ${MEDIA_ROOT}/music:/media/music
+      # - ${MEDIA_ROOT}/series:/media/series
+      # - ${MEDIA_ROOT}/music-lessons:/media/music-lessons
+      - ${MEDIA_ROOT}:/media
       #
       - /etc/localtime:/etc/localtime:ro
     labels:

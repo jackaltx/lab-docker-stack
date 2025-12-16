@@ -1,12 +1,21 @@
 ---
 networks:
   backend_storage:
-    external: true
+    name: backend_storage
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.42.0/24
 
   backend_media:
-    external: true
+    name: backend_media
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.43.0/24  # Matches arr-stack FIREWALL_OUTBOUND_SUBNETS
 
-  traefik_public:  # Create a bridge network with internet access
+  traefik_public:
+    name: traefik_public
     driver: bridge
 
 services:
@@ -19,13 +28,13 @@ services:
       - backend_media
       - traefik_public
     ports:
-      - "192.168.40.6:80:8080"  # Host 8080 → Container 8080 (dashboard)
-      - "192.168.40.6:443:443"   # Host 8443 → Container 443 (HTTPS services)
+      - "${BIND_IP}:80:8080"  # Host 80 → Container 8080 (dashboard)
+      - "${BIND_IP}:443:443"   # Host 443 → Container 443 (HTTPS services)
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ${DOCKER_ROOT}/Stacks/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ${DOCKER_ROOT}/Stacks/traefik/acme:/acme
-      - ${DOCKER_ROOT}/Stacks/traefik/access.log:/var/log/traefik/access.log
+      - ${DOCKER_ROOT}/Stacks/traefik/log:/var/log/traefik
       - /etc/localtime:/etc/localtime:ro
     env_file:
       - .env
