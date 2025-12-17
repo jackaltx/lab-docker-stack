@@ -1,0 +1,47 @@
+---
+networks:
+  backend_storage:
+    external: true  # Tell Docker this network already exists
+
+services:
+  mongo:
+    image: docker.io/mongo:latest
+    restart: always
+    container_name: mongo
+    networks:
+      - backend_storage
+    env_file:
+      - .env
+      - ${DOCKER_ROOT}/Secrets/mongo.env
+    volumes:
+      - ${DOCKER_ROOT}/Stacks/mongo:/data/db
+      - ${DOCKER_ROOT}/Projects/mongo/init-mongo.sh:/docker-entrypoint-initdb.d/init-mongo.sh:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=backend_storage"
+      - "traefik.http.routers.mongo.rule=Host(`${MONGO_HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.mongo.entrypoints=websecure"
+      - "traefik.http.routers.mongo.tls.certresolver=letsencrypt"
+      - "traefik.http.services.mongo.loadbalancer.server.port=27017"
+
+
+  mongo-express:
+    image: docker.io/mongo-express:latest
+    restart: always
+    container_name: mongo-express
+    networks:
+      - backend_storage
+    env_file:
+      - .env
+      - ${DOCKER_ROOT}/Secrets/mongo.env
+    environment:
+      ME_CONFIG_BASICAUTH_ENABLED: true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=backend_storage"
+      - "traefik.http.routers.mongo-express.rule=Host(`${MONGO_EXPRESS_HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.mongo-express.entrypoints=websecure"
+      - "traefik.http.routers.mongo-express.tls.certresolver=letsencrypt"
+      - "traefik.http.services.mongo-express.loadbalancer.server.port=8081"
+    depends_on:
+      - mongo
