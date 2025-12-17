@@ -50,18 +50,21 @@ services:
   # ==================================================================================
   # WhatWeb - Web Application Fingerprinting
   # https://github.com/urbanadventurer/WhatWeb
+  # STATUS: DISABLED - No working Docker images found
+  # Tested: urbanadventurer/whatweb (doesn't exist), ilyaglow/whatweb (broken deps),
+  #         alexandreoda/whatweb (broken entrypoint)
   # ==================================================================================
   #
-  whatweb:
-    image: urbanadventurer/whatweb:latest
-    container_name: whatweb-recon
-    network_mode: "service:gluetun"
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - ./results:/results
-    # Run on-demand: docker compose run --rm whatweb -a 1 --log-json=/results/scanme/whatweb.json scanme.nmap.org
-    # -a 1 = stealthy mode (passive, single HTTP request)
-    # Detects: Web server, CMS, frameworks, JavaScript libraries
+  # whatweb:
+  #   image: urbanadventurer/whatweb:latest
+  #   container_name: whatweb-recon
+  #   network_mode: "service:gluetun"
+  #   volumes:
+  #     - /etc/localtime:/etc/localtime:ro
+  #     - ./results:/results
+  #   # Run on-demand: docker compose run --rm whatweb -a 1 --log-json=/results/scanme/whatweb.json scanme.nmap.org
+  #   # -a 1 = stealthy mode (passive, single HTTP request)
+  #   # Detects: Web server, CMS, frameworks, JavaScript libraries
 
 
   #
@@ -89,15 +92,15 @@ services:
   # ==================================================================================
   #
   dnsrecon:
-    image: michaelwilde/dnsrecon:latest
+    image: cr0hn/dnsrecon:latest
     container_name: dnsrecon-recon
     network_mode: "service:gluetun"
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ./results:/results
-    # Run on-demand: docker compose run --rm dnsrecon -d scanme.nmap.org -t std -o /results/scanme/dnsrecon.txt
+    # Run on-demand: docker compose run --rm dnsrecon -d scanme.nmap.org -t std
     # -t std = standard enumeration (A, AAAA, MX, NS, SOA, TXT)
-    # -o = output file
+    # Output: Writes to stdout (redirect to file if needed)
     # Detects: DNS records, nameservers, mail servers
 
 
@@ -105,18 +108,21 @@ services:
   # ==================================================================================
   # theHarvester - OSINT Email/Subdomain Discovery
   # https://github.com/laramies/theHarvester
+  # STATUS: DISABLED - No working Docker images found
+  # Tested: kurobeats/theharvester (doesn't exist), simonthomas/theharvester (exec error),
+  #         gdscyber/theharvester (exec error), stk913/docker-theharvester (wrong entrypoint)
   # ==================================================================================
   #
-  theharvester:
-    image: kurobeats/theharvester:latest
-    container_name: theharvester-recon
-    network_mode: "service:gluetun"
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - ./results:/results
-    # Run on-demand: docker compose run --rm theharvester -d scanme.nmap.org -b google,bing,duckduckgo -f /results/scanme/theharvester
-    # Completely passive - searches public search engines only
-    # Detects: Email addresses, subdomains, IPs from indexed pages
+  # theharvester:
+  #   image: kurobeats/theharvester:latest
+  #   container_name: theharvester-recon
+  #   network_mode: "service:gluetun"
+  #   volumes:
+  #     - /etc/localtime:/etc/localtime:ro
+  #     - ./results:/results
+  #   # Run on-demand: docker compose run --rm theharvester -d scanme.nmap.org -b google,bing,duckduckgo -f /results/scanme/theharvester
+  #   # Completely passive - searches public search engines only
+  #   # Detects: Email addresses, subdomains, IPs from indexed pages
 
 
   #
