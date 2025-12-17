@@ -1,0 +1,9 @@
+# Exclude all scan results
+results/**/*
+
+# But keep directory structure
+!results/scanme/.gitkeep
+!results/example.com/.gitkeep
+
+# Exclude Gluetun data
+/mnt/zpool/Docker/Stacks/security-recon/gluetun/

@@ -1,0 +1,185 @@
+---
+# Security Reconnaissance Stack - Passive OSINT from Multiple Geolocations
+# Purpose: Service detection and fingerprinting via VPN-routed containers
+# Usage: Manual execution - change SERVER_REGIONS in .env, restart Gluetun, run tools
+
+services:
+  #
+  # ==================================================================================
+  # Gluetun VPN Gateway
+  # All reconnaissance tools share this container's network namespace
+  # ==================================================================================
+  #
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun-recon
+    hostname: gluetun-recon
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${DOCKER_ROOT}/Stacks/security-recon/gluetun:/gluetun
+    env_file:
+      - .env
+      - ${DOCKER_ROOT}/Secrets/vpn.env  # VPN credentials (OPENVPN_USER, OPENVPN_PASSWORD)
+    restart: unless-stopped
+    # No ports needed - tools run internally and write to mounted volumes
+
+
+  #
+  # ==================================================================================
+  # Nmap - Network Mapper (Service Detection)
+  # https://nmap.org/
+  # ==================================================================================
+  #
+  nmap:
+    image: instrumentisto/nmap:latest
+    container_name: nmap-recon
+    network_mode: "service:gluetun"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./results:/results
+    # Run on-demand: docker compose run --rm nmap -sT -sV -T2 -p 22,25,80,443,3306,53,8080 scanme.nmap.org
+    # Safe options: -sT (TCP connect), -sV (version detection), -T2 (polite timing)
+    # Output: nmap -sT -sV -T2 -p 22,25,80,443,3306,53,8080 -oN /results/scanme/nmap.txt scanme.nmap.org
+
+
+  #
+  # ==================================================================================
+  # WhatWeb - Web Application Fingerprinting
+  # https://github.com/urbanadventurer/WhatWeb
+  # STATUS: DISABLED - No working Docker images found
+  # Tested: urbanadventurer/whatweb (doesn't exist), ilyaglow/whatweb (broken deps),
+  #         alexandreoda/whatweb (broken entrypoint)
+  # ==================================================================================
+  #
+  # whatweb:
+  #   image: urbanadventurer/whatweb:latest
+  #   container_name: whatweb-recon
+  #   network_mode: "service:gluetun"
+  #   volumes:
+  #     - /etc/localtime:/etc/localtime:ro
+  #     - ./results:/results
+  #   # Run on-demand: docker compose run --rm whatweb -a 1 --log-json=/results/scanme/whatweb.json scanme.nmap.org
+  #   # -a 1 = stealthy mode (passive, single HTTP request)
+  #   # Detects: Web server, CMS, frameworks, JavaScript libraries
+
+
+  #
+  # ==================================================================================
+  # SSLScan / Nmap SSL Scripts - TLS/Certificate Analysis
+  # Using nmap with SSL scripts for certificate and cipher analysis
+  # ==================================================================================
+  #
+  sslscan:
+    image: instrumentisto/nmap:latest
+    container_name: sslscan-recon
+    network_mode: "service:gluetun"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./results:/results
+    entrypoint: ["/bin/sh"]
+    # Run on-demand: docker compose run --rm sslscan -c "nmap -p 443 --script ssl-cert,ssl-enum-ciphers -oN /results/scanme/sslscan.txt scanme.nmap.org"
+    # Detects: SSL/TLS versions, certificate chain, cipher suites, weak configs
+
+
+  #
+  # ==================================================================================
+  # DNSRecon - DNS Enumeration
+  # https://github.com/darkoperator/dnsrecon
+  # ==================================================================================
+  #
+  dnsrecon:
+    image: cr0hn/dnsrecon:latest
+    container_name: dnsrecon-recon
+    network_mode: "service:gluetun"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./results:/results
+    # Run on-demand: docker compose run --rm dnsrecon -d scanme.nmap.org -t std
+    # -t std = standard enumeration (A, AAAA, MX, NS, SOA, TXT)
+    # Output: Writes to stdout (redirect to file if needed)
+    # Detects: DNS records, nameservers, mail servers
+
+
+  #
+  # ==================================================================================
+  # theHarvester - OSINT Email/Subdomain Discovery
+  # https://github.com/laramies/theHarvester
+  # STATUS: DISABLED - No working Docker images found
+  # Tested: kurobeats/theharvester (doesn't exist), simonthomas/theharvester (exec error),
+  #         gdscyber/theharvester (exec error), stk913/docker-theharvester (wrong entrypoint)
+  # ==================================================================================
+  #
+  # theharvester:
+  #   image: kurobeats/theharvester:latest
+  #   container_name: theharvester-recon
+  #   network_mode: "service:gluetun"
+  #   volumes:
+  #     - /etc/localtime:/etc/localtime:ro
+  #     - ./results:/results
+  #   # Run on-demand: docker compose run --rm theharvester -d scanme.nmap.org -b google,bing,duckduckgo -f /results/scanme/theharvester
+  #   # Completely passive - searches public search engines only
+  #   # Detects: Email addresses, subdomains, IPs from indexed pages
+
+
+  #
+  # ==================================================================================
+  # cURL - Simple HTTP testing and header inspection
+  # ==================================================================================
+  #
+  curl:
+    image: curlimages/curl:latest
+    container_name: curl-recon
+    network_mode: "service:gluetun"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./results:/results
+    entrypoint: ["curl"]
+    # Run on-demand: docker compose run --rm curl -I -L https://scanme.nmap.org > results/scanme/curl-headers.txt
+    # -I = headers only, -L = follow redirects
+    # Detects: Server headers, cookies, redirects
+    # Note: Output redirect (>) must be done from host, not inside container
+
+
+  #
+  # ==================================================================================
+  # Kali Linux - Multi-Tool Security Suite
+  # https://github.com/vxcontrol/kali-linux-image
+  # Pre-installed with 200+ penetration testing tools for ISPConfig3 recon
+  # Fills gaps: whatweb, nikto, subfinder, amass, gobuster, etc.
+  # ==================================================================================
+  #
+  kali:
+    image: vxcontrol/kali-linux:latest
+    container_name: kali-recon
+    network_mode: "service:gluetun"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW  # Required for nmap scanning
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./results:/results
+      - ./scripts:/scripts
+    environment:
+      - SCAN_TARGET=${SCAN_TARGET:-scanme.nmap.org}  # Target to scan (override in .env)
+      - PUID=${PUID:-568}  # User ID for file ownership
+      - PGID=${PGID:-568}  # Group ID for file ownership
+    command: ["/bin/bash", "/scripts/startup-scan.sh"]
+    restart: unless-stopped
+    depends_on:
+      - gluetun
+    # Automated startup scanning - runs nmap + whatweb on container start
+    # Results stream to ./results/${SCAN_TARGET}/ in real-time
+    # Manual execution still available: docker compose run --rm kali <tool> <args>
+    # Examples:
+    #   whatweb -a 1 scanme.nmap.org
+    #   nikto -h scanme.nmap.org -Tuning 1 -output /results/scanme/nikto.txt
+    #   subfinder -d example.com -silent -o /results/scanme/subdomains.txt
+    # See README.md for full tool list and safety guidelines
+
+
+# No networks needed - all tools use Gluetun's network stack
+# Gluetun connects to VPN, tools inherit that connection

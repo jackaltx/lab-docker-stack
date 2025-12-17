@@ -1,0 +1,62 @@
+---
+networks:
+  backend_media:
+    external: true
+
+services:
+  #
+  # ==================================================================================
+  # Lightweight swiss-army-knife-like VPN client to multiple VPN service providers
+  # This is the interace into qbittorrent. This is the secret-sauce for a kill-switch.
+  #  
+  # https://github.com/qdm12/gluetun
+  #
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    hostname: gluetun  # used by the arr's for reference ??
+    networks:
+      - backend_media  # <-- On your network so others can reach it
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    ports:
+      - 8085:8085 # qbittorrent
+    volumes:
+      - '/etc/localtime:/etc/localtime:ro'
+      - '${DOCKER_ROOT}/Stacks/arr-stack/gluetun:/gluetun'
+    env_file:
+      - .env
+      - ${DOCKER_ROOT}/Secrets/arr-stack.env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=backend_media"
+      - "traefik.http.routers.qbittorrent.rule=Host(`${QBIT_HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.qbittorrent.entrypoints=websecure"
+      - "traefik.http.routers.qbittorrent.tls.certresolver=letsencrypt"
+      - "traefik.http.services.qbittorrent.loadbalancer.server.port=8085"
+
+
+  #
+  # ==================================================================================
+  #  qBittorrent/Transmission: Torrent clients for downloading media.
+  #
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent
+    container_name: qbittorrent
+    network_mode: "service:gluetun"
+    environment:
+      - 'PUID=${PUID}'
+      - 'PGID=${PGID}'
+      - 'TZ=${TZ}'
+      - WEBUI_PORT=8085
+    volumes:
+      - '/etc/localtime:/etc/localtime:ro'
+      - '${DOCKER_ROOT}/Stacks/arr-stack/qbittorrent:/config'
+      - '${MEDIA_ROOT}/downloads:/downloads'
+    depends_on:
+      - gluetun
+    restart: always
+
+
