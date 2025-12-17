@@ -179,13 +179,16 @@ sudo docker compose run --rm sslscan \
 #### 4. DNS Enumeration
 ```bash
 sudo docker compose run --rm dnsrecon \
-  -c "apk add --no-cache python3 py3-pip && pip3 install dnsrecon && dnsrecon -d scanme.nmap.org -t std > /results/scanme/dnsrecon-austria.txt"
+  -d scanme.nmap.org \
+  -t std \
+  -o /results/scanme/dnsrecon-austria.txt
 ```
 
 **What this does:**
 - Standard DNS queries (A, AAAA, MX, NS, SOA, TXT)
 - No zone transfer attempts
 - Safe, passive lookups
+- Pre-built image (no installation needed)
 
 #### 5. OSINT via Search Engines
 ```bash
@@ -203,13 +206,15 @@ sudo docker compose run --rm theharvester \
 #### 6. HTTP Headers
 ```bash
 sudo docker compose run --rm curl \
-  -c "apk add --no-cache curl && curl -I -L https://scanme.nmap.org > /results/scanme/curl-headers-austria.txt"
+  -I -L https://scanme.nmap.org \
+  > results/scanme/curl-headers-austria.txt
 ```
 
 **What this does:**
 - Fetches HTTP headers only
-- Follows redirects
+- Follows redirects (-L)
 - Shows server, cookies, security headers
+- Pre-built curl image (no installation needed)
 
 ---
 

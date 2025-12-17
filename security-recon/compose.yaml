@@ -89,16 +89,15 @@ services:
   # ==================================================================================
   #
   dnsrecon:
-    image: alpine:latest
+    image: michaelwilde/dnsrecon:latest
     container_name: dnsrecon-recon
     network_mode: "service:gluetun"
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ./results:/results
-    entrypoint: ["/bin/sh"]
-    # Install dnsrecon on first run:
-    # docker compose run --rm dnsrecon -c "apk add --no-cache python3 py3-pip && pip3 install dnsrecon && dnsrecon -d scanme.nmap.org -t std > /results/scanme/dnsrecon.txt"
+    # Run on-demand: docker compose run --rm dnsrecon -d scanme.nmap.org -t std -o /results/scanme/dnsrecon.txt
     # -t std = standard enumeration (A, AAAA, MX, NS, SOA, TXT)
+    # -o = output file
     # Detects: DNS records, nameservers, mail servers
 
 
@@ -126,16 +125,17 @@ services:
   # ==================================================================================
   #
   curl:
-    image: alpine:latest
+    image: curlimages/curl:latest
     container_name: curl-recon
     network_mode: "service:gluetun"
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ./results:/results
-    entrypoint: ["/bin/sh"]
-    # Run on-demand: docker compose run --rm curl -c "apk add --no-cache curl && curl -I -L -o /results/scanme/curl-headers.txt https://scanme.nmap.org"
+    entrypoint: ["curl"]
+    # Run on-demand: docker compose run --rm curl -I -L https://scanme.nmap.org > results/scanme/curl-headers.txt
     # -I = headers only, -L = follow redirects
     # Detects: Server headers, cookies, redirects
+    # Note: Output redirect (>) must be done from host, not inside container
 
 
 # No networks needed - all tools use Gluetun's network stack
