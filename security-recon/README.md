@@ -218,6 +218,124 @@ sudo docker compose run --rm curl \
 
 ---
 
+## Advanced Reconnaissance with Kali Linux
+
+The Kali container provides 200+ pre-installed security tools to fill gaps left by standalone tool images.
+
+### Tool Coverage Matrix
+
+| Capability | Standalone Service | Kali Alternative | Recommendation |
+|------------|-------------------|------------------|----------------|
+| Port scanning | nmap ✅ | nmap | Use standalone (lighter) |
+| SSL/TLS analysis | sslscan ✅ | testssl.sh | Use standalone |
+| DNS enumeration | dnsrecon ✅ | dnsrecon, dnsx | Use standalone |
+| HTTP headers | curl ✅ | curl | Use standalone |
+| **Web fingerprinting** | whatweb ❌ | **whatweb** ✅ | **Use Kali** |
+| **Subdomain discovery** | theharvester ❌ | **subfinder, amass** ✅ | **Use Kali** |
+| **Web vulnerability scan** | - | **nikto** ✅ | **Use Kali (passive mode)** |
+| Directory brute force | - | gobuster, ffuf, dirb | ⚠️ **Active - use cautiously** |
+| SQL injection test | - | sqlmap | ⚠️ **Active - avoid on production** |
+
+### Web Technology Fingerprinting (replaces whatweb)
+
+```bash
+sudo docker compose run --rm kali \
+  whatweb -a 1 --log-brief=/results/scanme/whatweb-austria.txt \
+  scanme.nmap.org
+```
+
+**What this does:**
+- Identifies web server, CMS, frameworks, JavaScript libraries
+- Passive mode (`-a 1`) - single HTTP request only
+- Safe for ISPConfig3 detection without triggering fail2ban
+
+### Web Vulnerability Scanning (Passive Mode)
+
+```bash
+sudo docker compose run --rm kali \
+  nikto -h scanme.nmap.org -Tuning 1 -output /results/scanme/nikto-austria.txt
+```
+
+**What this does:**
+- Passive checks for common web server misconfigurations
+- `-Tuning 1` limits to passive tests only
+- Safe when used with caution
+
+**⚠️ WARNING:** Nikto can be aggressive without `-Tuning 1`. Always use passive mode to avoid triggering fail2ban.
+
+### Subdomain Discovery (replaces theharvester)
+
+```bash
+sudo docker compose run --rm kali \
+  subfinder -d example.com -silent -o /results/scanme/subdomains-austria.txt
+```
+
+**What this does:**
+- Passive subdomain enumeration using public sources (Certificate Transparency, DNS aggregators)
+- No direct DNS queries to target server
+- Better coverage than theHarvester
+- Completely safe - no server contact
+
+**Alternative:** Use `amass` for more comprehensive results:
+```bash
+sudo docker compose run --rm kali \
+  amass enum -passive -d example.com -o /results/scanme/amass-austria.txt
+```
+
+### Directory Enumeration (USE WITH EXTREME CAUTION)
+
+```bash
+# ⚠️ ACTIVE SCANNING - Test against scanme.nmap.org ONLY
+sudo docker compose run --rm kali \
+  gobuster dir -u https://scanme.nmap.org \
+  -w /usr/share/wordlists/dirb/common.txt \
+  -t 5 --delay 2s -o /results/scanme/gobuster-austria.txt
+```
+
+**⚠️ WARNING:** Directory brute forcing is ACTIVE scanning:
+- `-t 5` limits threads to 5
+- `--delay 2s` adds 2-second delay between requests
+- **Will likely trigger fail2ban** if used against protected servers
+- **DO NOT use against ISPConfig3 server**
+- Test against `scanme.nmap.org` ONLY for learning purposes
+
+### Available Wordlists
+
+Kali includes SecLists and common wordlists:
+- `/usr/share/wordlists/dirb/common.txt` - Common directories
+- `/usr/share/wordlists/dirbuster/` - Various sized lists
+- `/usr/share/wordlists/rockyou.txt.gz` - 15GB password list (compressed)
+
+### List Available Tools
+
+```bash
+# List all installed tools
+sudo docker compose run --rm kali dpkg -l | grep -E '(whatweb|nikto|subfinder|amass|gobuster)'
+
+# Check if a specific tool is installed
+sudo docker compose run --rm kali which whatweb
+```
+
+### Safety Guidelines
+
+**✅ Passive/Safe Tools (OK for ISPConfig3):**
+- `whatweb -a 1` (stealthy mode)
+- `nikto -Tuning 1` (passive checks only)
+- `subfinder` (passive subdomain discovery)
+- `amass enum -passive` (OSINT mode)
+- `testssl.sh` (SSL/TLS analysis)
+
+**❌ Active/Aggressive Tools (AVOID or test on scanme.nmap.org only):**
+- `gobuster`/`dirb`/`ffuf` (directory brute force - triggers fail2ban)
+- `sqlmap` (SQL injection testing - triggers fail2ban)
+- `hydra` (password brute force - triggers fail2ban)
+- `nikto` without `-Tuning 1` (aggressive web scanning)
+- `wpscan --enumerate` (WordPress brute force)
+
+**Rule of thumb:** If the tool description includes "brute force" or "enumeration" without "passive" - it's likely active scanning.
+
+---
+
 ### Phase 2: Rotate Region and Repeat
 
 #### 1. Change VPN Region

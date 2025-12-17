@@ -144,5 +144,29 @@ services:
     # Note: Output redirect (>) must be done from host, not inside container
 
 
+  #
+  # ==================================================================================
+  # Kali Linux - Multi-Tool Security Suite
+  # https://github.com/vxcontrol/kali-linux-image
+  # Pre-installed with 200+ penetration testing tools for ISPConfig3 recon
+  # Fills gaps: whatweb, nikto, subfinder, amass, gobuster, etc.
+  # ==================================================================================
+  #
+  kali:
+    image: vxcontrol/kali-linux:latest
+    container_name: kali-recon
+    network_mode: "service:gluetun"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./results:/results
+      - ./scripts:/scripts  # Optional: mount custom scripts
+    # Run on-demand: docker compose run --rm kali <tool> <args>
+    # Examples:
+    #   whatweb -a 1 scanme.nmap.org
+    #   nikto -h scanme.nmap.org -Tuning 1 -output /results/scanme/nikto.txt
+    #   subfinder -d example.com -silent -o /results/scanme/subdomains.txt
+    # See README.md for full tool list and safety guidelines
+
+
 # No networks needed - all tools use Gluetun's network stack
 # Gluetun connects to VPN, tools inherit that connection
