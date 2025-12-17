@@ -165,6 +165,8 @@ services:
       - ./scripts:/scripts
     environment:
       - SCAN_TARGET=${SCAN_TARGET:-scanme.nmap.org}  # Target to scan (override in .env)
+      - PUID=${PUID:-568}  # User ID for file ownership
+      - PGID=${PGID:-568}  # Group ID for file ownership
     command: ["/bin/bash", "/scripts/startup-scan.sh"]
     restart: unless-stopped
     depends_on:

@@ -87,8 +87,13 @@ echo -e "VPN IP: ${YELLOW}${VPN_IP}${NC}"
 echo -e "Results location: ${YELLOW}${RESULTS_DIR}${NC}"
 echo -e "${GREEN}========================================${NC}\n"
 
+# Fix file ownership for NFS mount compatibility
+echo -e "${YELLOW}[4/5] Fixing file ownership...${NC}"
+chown -R ${PUID:-568}:${PGID:-568} "${RESULTS_DIR}/"*-${TIMESTAMP}* 2>/dev/null
+echo -e "${GREEN}✓ Changed ownership to ${PUID:-568}:${PGID:-568}${NC}\n"
+
 # List result files
-echo -e "${YELLOW}[4/4] Generated files:${NC}"
+echo -e "${YELLOW}[5/5] Generated files:${NC}"
 ls -lh "${RESULTS_DIR}/"*-${TIMESTAMP}* 2>/dev/null || echo "No files generated"
 
 # Keep container running (optional - comment out if you want container to exit after scan)
