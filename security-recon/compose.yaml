@@ -156,11 +156,22 @@ services:
     image: vxcontrol/kali-linux:latest
     container_name: kali-recon
     network_mode: "service:gluetun"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW  # Required for nmap scanning
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ./results:/results
-      - ./scripts:/scripts  # Optional: mount custom scripts
-    # Run on-demand: docker compose run --rm kali <tool> <args>
+      - ./scripts:/scripts
+    environment:
+      - SCAN_TARGET=${SCAN_TARGET:-scanme.nmap.org}  # Target to scan (override in .env)
+    command: ["/bin/bash", "/scripts/startup-scan.sh"]
+    restart: unless-stopped
+    depends_on:
+      - gluetun
+    # Automated startup scanning - runs nmap + whatweb on container start
+    # Results stream to ./results/${SCAN_TARGET}/ in real-time
+    # Manual execution still available: docker compose run --rm kali <tool> <args>
     # Examples:
     #   whatweb -a 1 scanme.nmap.org
     #   nikto -h scanme.nmap.org -Tuning 1 -output /results/scanme/nikto.txt
