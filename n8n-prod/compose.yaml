@@ -1,0 +1,69 @@
+---
+networks:
+  backend_storage:
+    external: true
+  n8n_prod_internal:
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: n8n-postgres
+    hostname: n8n-postgres
+    networks:
+      - n8n_prod_internal
+    env_file:
+      - .env
+      - ${DOCKER_ROOT}/Secrets/n8n-prod.env
+    environment:
+      - TZ=${TZ}
+      - POSTGRES_DB=n8n
+      - POSTGRES_USER=n8n
+      - POSTGRES_PASSWORD=${N8N_DB_PASSWORD}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${DOCKER_ROOT}/Stacks/n8n-prod/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U n8n -d n8n']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n
+    hostname: n8n
+    networks:
+      - backend_storage
+      - n8n_prod_internal
+    env_file:
+      - .env
+      - ${DOCKER_ROOT}/Secrets/n8n-prod.env
+    environment:
+      # TZ and N8N_ENCRYPTION_KEY loaded from .env files
+      # Note: n8n runs as UID 1000 internally, does not respect PUID/PGID
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=n8n
+      - DB_POSTGRESDB_PASSWORD=${N8N_DB_PASSWORD}
+      - N8N_HOST=${N8N_HOST}.${DOMAIN}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://${N8N_HOST}.${DOMAIN}/
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${DOCKER_ROOT}/Stacks/n8n-prod/data:/home/node/.n8n
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=backend_storage"
+      - "traefik.http.routers.n8n.rule=Host(`${N8N_HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.n8n.entrypoints=websecure"
+      - "traefik.http.routers.n8n.tls.certresolver=letsencrypt"
+      - "traefik.http.services.n8n.loadbalancer.server.port=5678"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped

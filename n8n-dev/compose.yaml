@@ -4,15 +4,15 @@ networks:
     external: true
 
 services:
-  n8n:
+  n8n-dev:
     image: docker.n8n.io/n8nio/n8n:latest
-    container_name: n8n
-    hostname: n8n
+    container_name: n8n-dev
+    hostname: n8n-dev
     networks:
       - backend_storage
     env_file:
       - .env
-      - ${DOCKER_ROOT}/Secrets/n8n.env
+      - ${DOCKER_ROOT}/Secrets/n8n-dev.env
     environment:
       # TZ and N8N_ENCRYPTION_KEY loaded from .env files
       # Note: n8n runs as UID 1000 internally, does not respect PUID/PGID
@@ -23,12 +23,12 @@ services:
       - WEBHOOK_URL=https://${N8N_HOST}.${DOMAIN}/
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ${DOCKER_ROOT}/Stacks/n8n:/home/node/.n8n
+      - ${DOCKER_ROOT}/Stacks/n8n-dev/data:/home/node/.n8n
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=backend_storage"
-      - "traefik.http.routers.n8n.rule=Host(`${N8N_HOST}.${DOMAIN}`)"
-      - "traefik.http.routers.n8n.entrypoints=websecure"
-      - "traefik.http.routers.n8n.tls.certresolver=letsencrypt"
-      - "traefik.http.services.n8n.loadbalancer.server.port=5678"
+      - "traefik.http.routers.n8n-dev.rule=Host(`${N8N_HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.n8n-dev.entrypoints=websecure"
+      - "traefik.http.routers.n8n-dev.tls.certresolver=letsencrypt"
+      - "traefik.http.services.n8n-dev.loadbalancer.server.port=5678"
     restart: unless-stopped
