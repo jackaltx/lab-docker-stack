@@ -10,8 +10,8 @@
 # Secrets stored separately in: /mnt/zpool/Docker/Secrets/
 
 
-# Protect .env files from commits - DISABLED (we want templates in git)
 # **/.env
 # *.env
 # Use .env.local or .env.secrets for actual secrets (these ARE gitignored)
 status-reports/
+

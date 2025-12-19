@@ -23,6 +23,12 @@ Remote: /mnt/zpool/Media            → Media library storage
 
 **Git Repository:** <https://github.com/jackaltx/true-lab-docker-stack> (public)
 
+**Branch Workflow:**
+- `truenas-dev` - Active development branch
+- `test` - Testing/staging (merge from truenas-dev)
+- `main` - Production-ready configurations
+- Deployment branches may be created later for specific environments
+
 ---
 
 ## Git Workflow & NFS Permissions
@@ -93,7 +99,7 @@ All services route through **Traefik v3.2** with:
 
 **backend_storage** - Infrastructure services (172.20.42.0/24)
 
-- Traefik, MinIO, Arcane, IT-Tools, CyberChef
+- Traefik, MinIO, Arcane, IT-Tools, CyberChef, n8n-dev, n8n (prod)
 
 **backend_media** - Media & application services (172.20.43.0/24)
 
@@ -102,6 +108,10 @@ All services route through **Traefik v3.2** with:
 **traefik_public** - Traefik internet access
 
 - Bridge network for external connectivity
+
+**n8n_prod_internal** - Private network for n8n-prod PostgreSQL
+
+- Isolated database communication (not accessible from other services)
 
 **Network Creation:**
 
@@ -290,6 +300,73 @@ sonarr.a0a0.org → CNAME → docker.a0a0.org → A → 192.168.40.6 → Traefik
 - **Storage:** `/mnt/zpool/Docker/Stacks/arcane` (SQLite database with stack configs)
 - **Features:** Deploy/update stacks, view logs, manage containers
 - **Note:** Migrated from TrueNAS Scale app to Docker Compose for consistency
+
+### 13. n8n-dev - Workflow Automation (Development)
+
+- **URL:** <https://n8n-dev.a0a0.org>
+- **Port:** 5678
+- **Purpose:** Workflow automation for experimentation and testing
+- **Database:** SQLite (single container, zero dependencies)
+- **Network:** backend_storage
+- **Storage:** `/mnt/zpool/Docker/Stacks/n8n-dev/data`
+- **UID:** Runs as UID 1000 internally (does NOT respect PUID/PGID)
+- **Encryption Key:** `/mnt/zpool/Docker/Secrets/n8n-dev.env`
+- **Use for:** Testing workflows, learning n8n, proof of concepts
+- **See also:** `n8n-COMPARISON.md` for dev vs prod comparison
+
+### 14. n8n-prod - Workflow Automation (Production)
+
+- **URL:** <https://n8n.a0a0.org>
+- **Port:** 5678
+- **Purpose:** Production workflow automation (designed for remote VM deployment)
+- **Database:** PostgreSQL 16 (dedicated instance)
+- **Containers:** 2 (n8n + postgres)
+- **Networks:** backend_storage (Traefik access) + n8n_prod_internal (private DB)
+- **Storage:**
+  - n8n data: `/mnt/zpool/Docker/Stacks/n8n-prod/data`
+  - PostgreSQL: `/mnt/zpool/Docker/Stacks/n8n-prod/postgres`
+- **UID:** n8n runs as UID 1000, PostgreSQL as UID 999 (both internal)
+- **Secrets:** `/mnt/zpool/Docker/Secrets/n8n-prod.env` (DB password + encryption key)
+- **Health Check:** PostgreSQL must be ready before n8n starts
+- **Backup:** Zero-downtime option via `pg_dump` or full stack backup
+- **Use for:** Production workflows, business-critical automation, remote VM deployment
+- **Migration:** Workflows can be exported from n8n-dev and imported (credentials must be re-entered)
+
+### 15. security-recon - Passive Reconnaissance Stack
+
+- **Purpose:** VPN-wrapped passive security reconnaissance tools
+- **VPN:** Gluetun (PIA) with multi-region rotation capability
+- **Network Mode:** All tools share Gluetun's network namespace (VPN routing)
+- **Storage:** `/mnt/zpool/Docker/Stacks/security-recon`
+- **Results:** `./results/{target}/` organized by scan target
+
+**Tools Included:**
+- **nmap** - Service detection and port scanning (`instrumentisto/nmap`)
+- **sslscan** - SSL/TLS analysis (via nmap SSL scripts)
+- **dnsrecon** - DNS enumeration (`cr0hn/dnsrecon`)
+- **curl** - HTTP header inspection (`curlimages/curl`)
+- **Kali Linux** - 200+ security tools (`vxcontrol/kali-linux`)
+  - whatweb, nikto, subfinder, amass, gobuster, testssl.sh, etc.
+  - Fills gaps where standalone Docker images don't exist
+  - Pre-configured with automated startup scanning
+
+**Automated Scanning:**
+- Container runs `startup-scan.sh` on start
+- Executes nmap + whatweb against `SCAN_TARGET` from .env
+- Results stream to `./results/${TARGET}/` in real-time
+- File ownership automatically fixed for NFS compatibility (PUID/PGID)
+
+**Safety:**
+- Configured for passive reconnaissance (no aggressive scanning)
+- Test target: `scanme.nmap.org` (scanning allowed)
+- VPN region rotation: Edit `.env` SERVER_REGIONS and restart Gluetun
+- See `security-recon/README.md` for tool usage and safety guidelines
+
+**Use Cases:**
+- Service fingerprinting from multiple geolocations
+- Passive OSINT and subdomain discovery
+- Web technology detection
+- Learning security reconnaissance techniques
 
 ---
 
@@ -507,8 +584,15 @@ PGID=568   # See docs/UID-GID-Strategy.md for rationale
 ❌ **Ignored by official images:**
 
 - Jellyfin official image (uses internal user 568)
+- **n8n** (uses internal UID 1000, does NOT respect PUID/PGID)
 - Overseerr (probably ignored)
 - Most non-LinuxServer.io images
+
+**Special Case - n8n:**
+- Runs as UID 1000 internally (node user)
+- Data directories must be owned by 1000:1000
+- Does NOT respect PUID/PGID environment variables
+- Applies to both n8n-dev and n8n-prod
 
 ✅ **TZ works almost everywhere** (most images respect timezone)
 
@@ -523,6 +607,189 @@ PGID=568   # See docs/UID-GID-Strategy.md for rationale
 - **Domains:** `{service}.a0a0.org`
 - **Networks:** `backend_{purpose}`
 
+### Advanced Patterns (Learned in Sprint)
+
+#### PostgreSQL Deployment Pattern (n8n-prod)
+
+**Dedicated PostgreSQL instance per service:**
+
+```yaml
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: {service}-postgres
+    networks:
+      - {service}_internal  # Private network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U {dbuser} -d {dbname}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    networks:
+      - backend_storage      # Traefik access
+      - {service}_internal   # Database access
+    depends_on:
+      postgres:
+        condition: service_healthy  # Wait for DB ready
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres  # Container name on internal network
+```
+
+**Why this pattern:**
+- Self-contained stack (matches infrastructure philosophy)
+- Independent lifecycle management
+- Database isolated from other services
+- Health checks prevent startup race conditions
+- Easy backup/restore (single stack)
+
+#### Health Checks with Depends_on
+
+```yaml
+depends_on:
+  postgres:
+    condition: service_healthy
+```
+
+**Ensures:**
+- Database ready before application starts
+- No connection errors on first boot
+- Automatic restart order if postgres crashes
+
+#### Automated Startup Scripts (security-recon)
+
+**Pattern:**
+```yaml
+services:
+  kali:
+    command: ["/bin/bash", "/scripts/startup-scan.sh"]
+    volumes:
+      - ./scripts:/scripts
+      - ./results:/results
+    environment:
+      - SCAN_TARGET=${SCAN_TARGET}
+      - PUID=${PUID}
+      - PGID=${PGID}
+```
+
+**Script responsibilities:**
+- Wait for VPN connection (check with `curl ifconfig.me`)
+- Run automated tasks (nmap, whatweb, etc.)
+- Fix file ownership for NFS compatibility (`chown -R ${PUID}:${PGID}`)
+- Keep container running (`tail -f /dev/null`) or exit when done
+
+#### Kali Linux Multi-Tool Container
+
+**Pattern for accessing 200+ security tools:**
+
+```yaml
+services:
+  kali:
+    image: vxcontrol/kali-linux:latest
+    network_mode: "service:gluetun"  # Share VPN namespace
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW  # Required for nmap
+    volumes:
+      - ./results:/results
+    command: ["/bin/bash", "/scripts/startup-scan.sh"]
+```
+
+**Usage:**
+```bash
+# Automated via startup script
+docker compose up -d
+
+# Manual tool execution
+docker compose run --rm kali whatweb -a 1 scanme.nmap.org
+docker compose run --rm kali subfinder -d example.com -silent
+docker compose run --rm kali nikto -h scanme.nmap.org -Tuning 1
+```
+
+**When to use:**
+- Standalone Docker images don't exist (whatweb, theharvester)
+- Need quick access to many tools without individual containers
+- Learning/testing security tools
+- Automated scanning workflows
+
+#### Network Namespace Sharing (VPN Routing)
+
+**Pattern from arr-stack and security-recon:**
+
+```yaml
+services:
+  gluetun:
+    # VPN client container
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+
+  client:
+    network_mode: "service:gluetun"  # Share gluetun's network
+    depends_on:
+      - gluetun
+```
+
+**Effect:**
+- Client container has no own network namespace
+- All traffic routes through gluetun's VPN
+- Cannot expose ports directly (use gluetun's ports)
+- Access client via gluetun's IP in network
+
+**Verify routing:**
+```bash
+docker exec gluetun curl ifconfig.me    # VPN IP
+docker exec client curl ifconfig.me     # Same VPN IP (routed!)
+```
+
+#### Dual Network Pattern (Public + Private)
+
+**Used by n8n-prod:**
+
+```yaml
+networks:
+  backend_storage:
+    external: true  # Public (Traefik access)
+  n8n_prod_internal:
+    driver: bridge  # Private (DB only)
+
+services:
+  app:
+    networks:
+      - backend_storage      # Accessible via Traefik
+      - n8n_prod_internal    # Can talk to postgres
+
+  postgres:
+    networks:
+      - n8n_prod_internal    # NOT on backend_storage = isolated
+```
+
+**Security benefit:**
+- Database not exposed to other services
+- Only application can access database
+- Traefik cannot reach database directly
+
+#### File Ownership for NFS Mounts
+
+**Problem:** Container writes files as internal UID, NFS mount can't access
+
+**Solution in startup scripts:**
+
+```bash
+# Inside container (runs as root)
+chown -R ${PUID:-568}:${PGID:-568} /results/*
+
+# Or use find for specific files
+find /results -type f -name "*.txt" -exec chown ${PUID}:${PGID} {} \;
+```
+
+**Applied in:**
+- security-recon startup-scan.sh
+- Any service writing to NFS-mounted volumes
+
 ---
 
 ## Important Notes
@@ -530,13 +797,17 @@ PGID=568   # See docs/UID-GID-Strategy.md for rationale
 ### Deployment Dependencies
 
 1. **Deploy Traefik first** - Creates networks (backend_storage, backend_media, traefik_public) and provides routing
-2. **arr-stack:** Gluetun must start before qBittorrent
+2. **arr-stack:** Gluetun must start before qBittorrent (network namespace sharing)
+3. **n8n-prod:** PostgreSQL must be healthy before n8n starts (health check dependency)
+4. **security-recon:** Gluetun must start before Kali container (network namespace sharing)
 
 ### PUID/PGID Variations
 
 - **arr-stack:** Uses PUID=568, PGID=568 (migrated from 1000:1000 on 2025-12-05)
 - **jellyfin:** Hardcoded PUID=568 in compose file
-- **Now aligned** - Both arr-stack and jellyfin use TrueNAS apps user (568:568)
+- **n8n-dev / n8n-prod:** Runs as UID 1000 internally (does NOT respect PUID/PGID env vars)
+- **PostgreSQL:** Runs as UID 999 internally (n8n-prod postgres container)
+- **Standard services:** Most use 568:568 (apps user alignment)
 
 ### Security Considerations
 
@@ -712,6 +983,14 @@ https://rss.a0a0.org          - FreshRSS
 https://ladder.a0a0.org       - 13ft Ladder
 https://it-tools.a0a0.org     - IT Tools
 https://cyberchef.a0a0.org    - CyberChef
+
+Automation:
+https://n8n-dev.a0a0.org      - n8n Workflow Automation (Dev/Testing)
+https://n8n.a0a0.org          - n8n Workflow Automation (Production)
+
+Security:
+# security-recon has no web UI - CLI tools only
+# Results available in /mnt/zpool/Docker/Stacks/security-recon/results/
 ```
 
 ### SSH Quick Commands
