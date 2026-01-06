@@ -1,0 +1,30 @@
+---
+services:
+  telegraf:
+    image: telegraf:latest
+    container_name: telegraf
+    restart: unless-stopped
+    env_file:
+      - .env
+      - ${DOCKER_ROOT}/Secrets/telegraf.env
+    environment:
+      - TZ=${TZ}
+      - HOST_PROC=/hostfs/proc
+      - HOST_SYS=/hostfs/sys
+      - HOST_ETC=/hostfs/etc
+      - HOST_VAR=/hostfs/var
+      - HOST_RUN=/hostfs/run
+      - HOST_MOUNT_PREFIX=/hostfs
+    volumes:
+      - ${DOCKER_ROOT}/Stacks/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /:/hostfs:ro
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - backend_storage
+    # Note: Telegraf is a metrics collector/forwarder - no web UI
+    # Configuration in telegraf.conf, credentials in .env
+
+networks:
+  backend_storage:
+    external: true
