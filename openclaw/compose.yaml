@@ -41,6 +41,7 @@ services:
         "lan",
         "--port",
         "18789",
+        "--allow-unconfigured",
       ]
 
 networks:
