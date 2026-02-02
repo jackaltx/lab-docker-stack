@@ -1,0 +1,48 @@
+services:
+  openclaw:
+    image: 1panel/openclaw:latest
+    container_name: openclaw
+    environment:
+      - HOME=/home/node
+      - TERM=xterm-256color
+      - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN}
+      - CLAUDE_AI_SESSION_KEY=${CLAUDE_AI_SESSION_KEY}
+      - CLAUDE_WEB_SESSION_KEY=${CLAUDE_WEB_SESSION_KEY}
+      - CLAUDE_WEB_COOKIE=${CLAUDE_WEB_COOKIE}
+    volumes:
+      - ${DOCKER_ROOT}/Stacks/openclaw/config:/home/node/.openclaw
+      - ${DOCKER_ROOT}/Stacks/openclaw/workspace:/home/node/.openclaw/workspace
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=backend_storage"
+      # Gateway UI
+      - "traefik.http.routers.openclaw.rule=Host(`${OPENCLAW_HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.openclaw.entrypoints=websecure"
+      - "traefik.http.routers.openclaw.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.openclaw.service=openclaw"
+      - "traefik.http.services.openclaw.loadbalancer.server.port=18789"
+      # Bridge port
+      - "traefik.http.routers.openclaw-bridge.rule=Host(`${OPENCLAW_HOST}-bridge.${DOMAIN}`)"
+      - "traefik.http.routers.openclaw-bridge.entrypoints=websecure"
+      - "traefik.http.routers.openclaw-bridge.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.openclaw-bridge.service=openclaw-bridge"
+      - "traefik.http.services.openclaw-bridge.loadbalancer.server.port=18790"
+    networks:
+      - backend_storage
+    restart: unless-stopped
+    init: true
+    command:
+      [
+        "node",
+        "dist/index.js",
+        "gateway",
+        "--bind",
+        "lan",
+        "--port",
+        "18789",
+      ]
+
+networks:
+  backend_storage:
+    external: true
