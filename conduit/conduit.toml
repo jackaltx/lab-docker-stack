@@ -7,7 +7,8 @@ server_name = "CONDUIT_HOST_PLACEHOLDER.DOMAIN_PLACEHOLDER"
 database_backend = "rocksdb"
 database_path = "/var/lib/matrix-conduit/"
 
-# The port Conduit will be running on
+# The address and port Conduit will be running on
+address = "0.0.0.0"
 port = 6167
 
 # Max size for uploads
