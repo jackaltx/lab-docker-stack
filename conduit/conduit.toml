@@ -1,0 +1,34 @@
+[global]
+# The server_name is the name of this homeserver. It is used as a suffix for user
+# and room aliases. Examples: matrix.org, conduit.rs
+server_name = "CONDUIT_HOST_PLACEHOLDER.DOMAIN_PLACEHOLDER"
+
+# The database backend for conduit
+database_backend = "rocksdb"
+database_path = "/var/lib/matrix-conduit/"
+
+# The port Conduit will be running on
+port = 6167
+
+# Max size for uploads
+max_request_size = 20_000_000 # in bytes
+
+# Enables registration. If set to false, no users can register on this server.
+allow_registration = true
+
+# Enable federation
+allow_federation = true
+
+# Trusted servers to gather public keys of other servers.
+trusted_servers = ["matrix.org"]
+
+# Maximum concurrent requests
+max_concurrent_requests = 100
+
+# Set this to any number for how much the response body is allowed to be in bytes before
+# sending a chunked response. The default is 32768 (32 KiB)
+#max_response_body_before_write = 32768
+
+# Disable automatic room upgrade
+# If you would rather disable this for some reason, change this to true
+#disable_room_upgrades = false
