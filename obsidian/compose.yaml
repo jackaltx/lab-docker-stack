@@ -16,11 +16,7 @@ services:
       - "traefik.http.routers.obsidian.rule=Host(`${OBSIDIAN_HOST}.${DOMAIN}`)"
       - "traefik.http.routers.obsidian.entrypoints=websecure"
       - "traefik.http.routers.obsidian.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.obsidian.service=obsidian"
-      - "traefik.http.services.obsidian.loadbalancer.server.port=3001"
-      - "traefik.http.services.obsidian.loadbalancer.server.scheme=https"
-      - "traefik.http.services.obsidian.loadbalancer.serverstransport=obsidian-transport@docker"
-      - "traefik.http.servertransports.obsidian-transport.insecureskipverify=true"
+      - "traefik.http.services.obsidian.loadbalancer.server.port=3000"
     networks:
       - backend_storage
     restart: unless-stopped
