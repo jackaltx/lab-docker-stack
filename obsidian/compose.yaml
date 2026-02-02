@@ -1,0 +1,29 @@
+services:
+  obsidian:
+    image: lscr.io/linuxserver/obsidian:latest
+    container_name: obsidian
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - /mnt/zpool/Docker/Stacks/obsidian/config:/config
+      - /mnt/zpool/Docker/Stacks/obsidian/vaults:/vaults
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=backend_storage"
+      - "traefik.http.routers.obsidian.rule=Host(`${OBSIDIAN_HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.obsidian.entrypoints=websecure"
+      - "traefik.http.routers.obsidian.tls.certresolver=letsencrypt"
+      - "traefik.http.services.obsidian.loadbalancer.server.port=3001"
+    networks:
+      - backend_storage
+    restart: unless-stopped
+    security_opt:
+      - seccomp:unconfined
+    shm_size: "1gb"
+
+networks:
+  backend_storage:
+    external: true

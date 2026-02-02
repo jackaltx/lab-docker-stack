@@ -315,6 +315,37 @@ Networks are automatically created when Traefik is deployed:
 
 **No manual `docker network create` needed** - Traefik's compose file handles this.
 
+### Tailoring .env Files for Deployments
+
+Use `sync-env.sh` to synchronize variables from a template file to all stack .env files:
+
+```bash
+# Usage: sync-env.sh -f <template> [-p|-u]
+#   -f <template>  Source template (REQUIRED): .env.global, a0a0.env, dockarr.env
+#   -p             Protect: Add **/.env to .gitignore (site-specific work)
+#   -u             Unprotect: Remove from .gitignore (generic work/commits)
+
+# Examples:
+# VM testing deployment
+./sync-env.sh -f dockarr.env -p
+
+# Production TrueNAS deployment
+./sync-env.sh -f a0a0.env -p
+
+# Switch to generic values for git commits
+./sync-env.sh -f .env.global -u
+```
+
+**How it works:**
+- Reads variables from template file (e.g., `BIND_IP`, `DOMAIN`, `*_HOST` entries)
+- Updates matching variables in all stack `.env` files
+- Only updates variables that already exist in target files
+- Optionally manages .gitignore to protect/expose .env files
+
+**Workflow:**
+- **Site-specific testing:** `sync-env.sh -f {profile}.env -p` (protects .env from commits)
+- **Generic baseline:** `sync-env.sh -f .env.global -u` (allows committing generic values)
+
 ### Deploy a Stack
 
 ```bash
@@ -661,7 +692,24 @@ TZ=America/Chicago
 # Add service-specific variables
 ```
 
-4. Create data directory on TrueNAS:
+4. Create `build_stack_data.sh` for automated directory creation:
+
+```bash
+#!/bin/bash
+source .env
+mkdir -p "${DOCKER_ROOT}/Stacks/{service}"
+# Add subdirectories as needed:
+# mkdir -p "${DOCKER_ROOT}/Stacks/{service}/config"
+# mkdir -p "${DOCKER_ROOT}/Stacks/{service}/data"
+```
+
+Make executable: `chmod +x build_stack_data.sh`
+
+**Usage:**
+- Run locally: `./build_stack_data.sh` (creates directories using .env variables)
+- Run all projects: `./run_all_builds.sh` (executes all build_stack_data.sh scripts)
+
+5. Create data directory on TrueNAS:
 
 ```bash
 ssh lavadmin@truenas.a0a0.org
