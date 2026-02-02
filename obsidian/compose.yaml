@@ -17,6 +17,7 @@ services:
       - "traefik.http.routers.obsidian.entrypoints=websecure"
       - "traefik.http.routers.obsidian.tls.certresolver=letsencrypt"
       - "traefik.http.services.obsidian.loadbalancer.server.port=3001"
+      - "traefik.http.services.obsidian.loadbalancer.server.scheme=https"
     networks:
       - backend_storage
     restart: unless-stopped
