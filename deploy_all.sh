@@ -39,6 +39,17 @@ find . -type f \( -name "compose.yaml" -o -name "compose.yml" -o -name "docker-c
     fi
 
     echo -e "${GREEN}[DEPLOY]${NC} $project_name"
+
+    # Run build_stack_data.sh if it exists
+    if [ -f "$dir/build_stack_data.sh" ]; then
+        echo -e "${BLUE}  → Running build_stack_data.sh${NC}"
+        if (cd "$dir" && ./build_stack_data.sh); then
+            echo -e "${GREEN}  ✓ Stack data directories created${NC}"
+        else
+            echo -e "${YELLOW}  ⚠ build_stack_data.sh failed (continuing)${NC}"
+        fi
+    fi
+
     if (cd "$dir" && docker compose up -d); then
         echo -e "${GREEN}✓${NC} $project_name deployed successfully"
     else
