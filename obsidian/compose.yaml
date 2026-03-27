@@ -18,6 +18,9 @@ services:
       - "traefik.http.routers.obsidian.rule=Host(`${OBSIDIAN_HOST}.${DOMAIN}`)"
       - "traefik.http.routers.obsidian.entrypoints=websecure"
       - "traefik.http.routers.obsidian.tls.certresolver=letsencrypt"
+      # IP Whitelist - Restrict access to allowed IPs only
+      - "traefik.http.middlewares.obsidian-whitelist.ipwhitelist.sourcerange=${OBSIDIAN_WHITELIST_IPS}"
+      - "traefik.http.routers.obsidian.middlewares=obsidian-whitelist"
       - "traefik.http.services.obsidian.loadbalancer.server.port=3000"
     networks:
       - backend_storage
