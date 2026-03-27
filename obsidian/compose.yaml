@@ -1,0 +1,28 @@
+services:
+  obsidian:
+    image: lscr.io/linuxserver/obsidian:latest
+    container_name: obsidian
+    security_opt:
+      - seccomp:unconfined  # Required for Chromium-based app functionality
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${DOCKER_ROOT}/Stacks/obsidian:/config
+      - /etc/localtime:/etc/localtime:ro
+    shm_size: "1gb"  # Shared memory for browser performance
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=backend_storage"
+      - "traefik.http.routers.obsidian.rule=Host(`${OBSIDIAN_HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.obsidian.entrypoints=websecure"
+      - "traefik.http.routers.obsidian.tls.certresolver=letsencrypt"
+      - "traefik.http.services.obsidian.loadbalancer.server.port=3000"
+    networks:
+      - backend_storage
+    restart: unless-stopped
+
+networks:
+  backend_storage:
+    external: true

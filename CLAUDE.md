@@ -99,7 +99,7 @@ All services route through **Traefik v3.2** with:
 
 **backend_storage** - Infrastructure services (172.20.42.0/24)
 
-- Traefik, MinIO, Arcane, IT-Tools, CyberChef, n8n-dev, n8n (prod), Telegraf
+- Traefik, MinIO, Arcane, IT-Tools, CyberChef, n8n-dev, n8n (prod), Telegraf, Obsidian
 
 **backend_media** - Media & application services (172.20.43.0/24)
 
@@ -367,6 +367,31 @@ sonarr.a0a0.org → CNAME → docker.a0a0.org → A → 192.168.40.6 → Traefik
 - Passive OSINT and subdomain discovery
 - Web technology detection
 - Learning security reconnaissance techniques
+
+### 16. obsidian - Personal Knowledge Base
+
+- **URL:** <https://obsidian.a0a0.org>
+- **Port:** 3000
+- **Purpose:** Personal knowledge base and note-taking application
+- **Image:** LinuxServer.io Obsidian (browser-based access)
+- **Network:** backend_storage
+- **Storage:** `/mnt/zpool/Docker/Stacks/obsidian` (vaults and configuration)
+- **PUID/PGID:** 568:568 (apps user)
+- **Special Requirements:**
+  - `shm_size: 1gb` - Required for browser performance
+  - `seccomp:unconfined` - Required for Chromium-based functionality
+- **Features:**
+  - Create linked notes and build knowledge graphs
+  - Plain text Markdown files (no vendor lock-in)
+  - Plugin ecosystem for extensibility
+  - Browser-based access via Traefik
+
+**Use Cases:**
+
+- Personal wiki and second brain
+- Project documentation
+- Daily notes and journaling
+- Knowledge management for homelab
 
 ---
 
@@ -983,6 +1008,7 @@ https://rss.a0a0.org          - FreshRSS
 https://ladder.a0a0.org       - 13ft Ladder
 https://it-tools.a0a0.org     - IT Tools
 https://cyberchef.a0a0.org    - CyberChef
+https://obsidian.a0a0.org     - Obsidian Knowledge Base
 
 Automation:
 https://n8n-dev.a0a0.org      - n8n Workflow Automation (Dev/Testing)
