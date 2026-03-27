@@ -1,0 +1,336 @@
+---
+networks:
+  backend_media:
+    external: true
+
+services:
+  #
+  # ==================================================================================
+  # Lightweight swiss-army-knife-like VPN client to multiple VPN service providers
+  # This is the interace into qbittorrent. This is the secret-sauce for a kill-switch.
+  #  
+  # https://github.com/qdm12/gluetun
+  #
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    hostname: gluetun  # used by the arr's for reference ??
+    networks:
+      - backend_media  # <-- On your network so others can reach it
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    ports:
+      - 8085:8085 # qbittorrent
+    volumes:
+      - '/etc/localtime:/etc/localtime:ro'
+      - '${DOCKER_ROOT}/Stacks/arr-stack/gluetun:/gluetun'
+    env_file:
+      - .env
+      - ${DOCKER_ROOT}/Secrets/arr-stack.env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=backend_media"
+      - "traefik.http.routers.qbittorrent.rule=Host(`${QBIT_HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.qbittorrent.entrypoints=websecure"
+      - "traefik.http.routers.qbittorrent.tls.certresolver=letsencrypt"
+      - "traefik.http.services.qbittorrent.loadbalancer.server.port=8085"
+
+
+  #
+  # ==================================================================================
+  #  qBittorrent/Transmission: Torrent clients for downloading media.
+  #
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent
+    container_name: qbittorrent
+    network_mode: "service:gluetun"
+    environment:
+      - 'PUID=${PUID}'
+      - 'PGID=${PGID}'
+      - 'TZ=${TZ}'
+      - WEBUI_PORT=8085
+    volumes:
+      - '/etc/localtime:/etc/localtime:ro'
+      - '${DOCKER_ROOT}/Stacks/arr-stack/qbittorrent:/config'
+      - '${MEDIA_ROOT}/downloads:/downloads'
+    depends_on:
+      - gluetun
+    restart: always
+
+  # ==================================================================================
+  # ==================================================================================
+  # ==================================================================================
+  # ==================================================================================
+
+
+  #
+  # ==================================================================================
+  # Prowlarr: Indexer manager for the other *arr applications, 
+  # simplifying the management of torrent trackers and Usenet indexers.
+  #
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    restart: unless-stopped
+    networks:
+      - backend_media
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - '/etc/localtime:/etc/localtime:ro'
+      - '${DOCKER_ROOT}/Stacks/arr-stack/prowlarr:/config'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=backend_media"
+      - "traefik.http.routers.prowlarr.rule=Host(`${PROWLARR_HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.prowlarr.entrypoints=websecure"
+      - "traefik.http.routers.prowlarr.tls.certresolver=letsencrypt"
+      - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
+
+  #
+  # ==================================================================================
+  # Radarr: Movie management and automation.
+  #
+  # This service runs as user abc,  however they are nice, the chown and add user 1000
+  # Basically ignore what we pass in
+  #  
+  # $id abc
+  # uid=911(abc) gid=911(abc) groups=911(abc),1000(users)
+
+  radarr:
+    container_name: radarr
+    image: 'lscr.io/linuxserver/radarr:latest'
+    restart: unless-stopped
+    networks:
+      - backend_media
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - '/etc/localtime:/etc/localtime:ro'
+      - '${DOCKER_ROOT}/Stacks/arr-stack/radarr:/config'
+      - '${MEDIA_ROOT}:/media'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=backend_media"
+      - "traefik.http.routers.radarr.rule=Host(`${RADARR_HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.radarr.entrypoints=websecure"
+      - "traefik.http.routers.radarr.tls.certresolver=letsencrypt"
+      - "traefik.http.services.radarr.loadbalancer.server.port=7878"
+
+  #
+  # ==================================================================================
+  # Sonarr: TV show management and automation.
+  # https://sonarr.tv/
+  #
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    restart: unless-stopped
+    networks:
+      - backend_media  # <-- Traefik can reach it
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - '/etc/localtime:/etc/localtime:ro'
+      - '${DOCKER_ROOT}/Stacks/arr-stack/sonarr:/config'
+      - '${MEDIA_ROOT}:/media'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=backend_media"
+      - "traefik.http.routers.sonarr.rule=Host(`${SONARR_HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.sonarr.entrypoints=websecure"
+      - "traefik.http.routers.sonarr.tls.certresolver=letsencrypt"
+      - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
+
+
+  # # ==================================================================================
+  # # Readarr: Book management and automation.
+  # #
+  # # NOTE: this runs as user hotio (1000) and you cannot override
+  # #       and they dont fix it, we have to!
+
+  # readarr:
+  #   image: ghcr.io/hotio/readarr:latest
+  #   container_name: readarr
+  #   restart: unless-stopped
+  #   networks:
+  #     - backend_media
+  #   environment:
+  #     - UID=${PUID}
+  #     - GID=${PGID}
+  #     - TZ=${TZ}
+  #   volumes:
+  #     - '/etc/localtime:/etc/localtime:ro'
+  #     - '${DOCKER_ROOT}/Stacks/arr-stack/readarr:/config' # Stores Readarr's database and configuration
+  #     - '${MEDIA_ROOT}:/media'
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.docker.network=backend_media"
+  #     - "traefik.http.routers.readarr.rule=Host(`${READARR_HOST}.${DOMAIN}`)"
+  #     - "traefik.http.routers.readarr.entrypoints=websecure"
+  #     - "traefik.http.routers.readarr.tls.certresolver=letsencrypt"
+  #     - "traefik.http.services.readarr.loadbalancer.server.port=8787"
+
+  # ==================================================================================
+  # Lidarr: Music management and automation.
+  #
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:latest
+    container_name: lidarr
+    restart: unless-stopped
+    networks:
+      - backend_media
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - '/etc/localtime:/etc/localtime:ro'
+      - '${DOCKER_ROOT}/Stacks/arr-stack/lidarr:/config' # Stores Readarr's database and configuration
+      - '${MEDIA_ROOT}:/media'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=backend_media"
+      - "traefik.http.routers.lidarr.rule=Host(`${LIDARR_HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.lidarr.entrypoints=websecure"
+      - "traefik.http.routers.lidarr.tls.certresolver=letsencrypt"
+      - "traefik.http.services.lidarr.loadbalancer.server.port=8686"
+
+
+  # 
+  # ==================================================================================
+  #  Bazarr: handles subtitles for Sonarr and Radarr
+  #
+  # This service runs as user abc,  however they are nice, the chown and add user 1000
+  # Basically ignore what we pass in
+  #  
+  # $id abc
+  # uid=911(abc) gid=911(abc) groups=911(abc),1000(users)
+
+  bazarr:
+    container_name: bazarr
+    image: 'lscr.io/linuxserver/bazarr:latest'
+    restart: unless-stopped
+    networks:
+      - backend_media
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - UMASK_SET=022
+    volumes:
+      - '/etc/localtime:/etc/localtime:ro'
+      - '${DOCKER_ROOT}/Stacks/arr-stack/bazarr:/config'
+      - '${MEDIA_ROOT}:/media'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=backend_media"
+      - "traefik.http.routers.bazarr.rule=Host(`${BAZARR_HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.bazarr.entrypoints=websecure"
+      - "traefik.http.routers.bazarr.tls.certresolver=letsencrypt"
+      - "traefik.http.services.bazarr.loadbalancer.server.port=6767"
+ 
+  #
+  # ==================================================================================
+  #  Jellyseerr is a request management & media discovery front-end for Jellyfin
+  #
+  jellyseerr:
+    image: 'fallenbagel/jellyseerr:latest'
+    container_name: jellyseerr
+    restart: unless-stopped
+    networks:
+      - backend_media
+    environment:
+      - LOG_LEVEL=debug
+    volumes:
+      - '/etc/localtime:/etc/localtime:ro'
+      - '${DOCKER_ROOT}/Stacks/arr-stack/jellyseerr:/app/config'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=backend_media"
+      - "traefik.http.routers.jellyseerr.rule=Host(`${JELLYSEERR_HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.jellyseerr.entrypoints=websecure"
+      - "traefik.http.routers.jellyseerr.tls.certresolver=letsencrypt"
+      - "traefik.http.services.jellyseerr.loadbalancer.server.port=5055"
+
+  
+  profilarr:
+    image: santiagosayshey/profilarr:latest
+    container_name: profilarr
+    networks:
+      - backend_media
+    environment:
+      - LOG_LEVEL=debug
+    volumes:
+      - '/etc/localtime:/etc/localtime:ro'
+      - '${DOCKER_ROOT}/Stacks/arr-stack/profilarr:/config'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=backend_media"
+      - "traefik.http.routers.profilarr.rule=Host(`${PROFILARR_HOST}.${DOMAIN}`)"
+      - "traefik.http.routers.profilarr.entrypoints=websecure"
+      - "traefik.http.routers.profilarr.tls.certresolver=letsencrypt"
+      - "traefik.http.services.profilarr.loadbalancer.server.port=6868"
+
+
+
+  
+  # ==================================================================================
+  # ==================================================================================
+  # ==================================================================================
+  # ==================================================================================
+
+  # Private Containers.
+
+  #
+  # ==================================================================================
+  #  Overseerr is a request management & media discovery front-end for Jellyfin (or...)
+  #
+
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    restart: unless-stopped
+    networks:
+      - backend_media
+
+  #
+  # ==================================================================================
+  #  Unpackerr is un-archiver
+  #
+  #  SMELL: currently watching the downloads folder, but is has SONARR, RADAAR and READARR
+  #         environment variables to help "configure". However, those will require the API key.
+  #         I will test looking at the qbit download fole
+  #
+
+  unpackerr:
+    image: golift/unpackerr:latest # Or a specific version
+    container_name: unpackerr
+    restart: unless-stopped
+    networks:
+      - backend_media
+    volumes:
+      - ${DOCKER_ROOT}/Stacks/arr-stack/unpackerr/config:/config
+      - '${MEDIA_ROOT}/downloads:/downloads'
+
+  #
+  # ==================================================================================
+  #  Recyclarr sychronizes recommended setting 
+  #  I replaced it with profilarr??
+
+  # recyclarr:
+  #   image: ghcr.io/recyclarr/recyclarr
+  #   container_name: recyclarr
+  #   restart: unless-stopped
+  #   networks:
+  #     - backend_media
+  #   volumes:
+  #     - ${DOCKER_ROOT}/Stacks/arr-stack/recyclarr:/config
