@@ -6,67 +6,6 @@ networks:
 services:
   #
   # ==================================================================================
-  # Lightweight swiss-army-knife-like VPN client to multiple VPN service providers
-  # This is the interace into qbittorrent. This is the secret-sauce for a kill-switch.
-  #  
-  # https://github.com/qdm12/gluetun
-  #
-  gluetun:
-    image: qmcgaw/gluetun:latest
-    container_name: gluetun
-    hostname: gluetun  # used by the arr's for reference ??
-    networks:
-      - backend_media  # <-- On your network so others can reach it
-    cap_add:
-      - NET_ADMIN
-    devices:
-      - /dev/net/tun:/dev/net/tun
-    ports:
-      - 8085:8085 # qbittorrent
-    volumes:
-      - '/etc/localtime:/etc/localtime:ro'
-      - '${DOCKER_ROOT}/Stacks/arr-stack/gluetun:/gluetun'
-    env_file:
-      - .env
-      - ${DOCKER_ROOT}/Secrets/arr-stack.env
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=backend_media"
-      - "traefik.http.routers.qbittorrent.rule=Host(`${QBIT_HOST}.${DOMAIN}`)"
-      - "traefik.http.routers.qbittorrent.entrypoints=websecure"
-      - "traefik.http.routers.qbittorrent.tls.certresolver=letsencrypt"
-      - "traefik.http.services.qbittorrent.loadbalancer.server.port=8085"
-
-
-  #
-  # ==================================================================================
-  #  qBittorrent/Transmission: Torrent clients for downloading media.
-  #
-  qbittorrent:
-    image: lscr.io/linuxserver/qbittorrent
-    container_name: qbittorrent
-    network_mode: "service:gluetun"
-    environment:
-      - 'PUID=${PUID}'
-      - 'PGID=${PGID}'
-      - 'TZ=${TZ}'
-      - WEBUI_PORT=8085
-    volumes:
-      - '/etc/localtime:/etc/localtime:ro'
-      - '${DOCKER_ROOT}/Stacks/arr-stack/qbittorrent:/config'
-      - '${MEDIA_ROOT}/downloads:/downloads'
-    depends_on:
-      - gluetun
-    restart: always
-
-  # ==================================================================================
-  # ==================================================================================
-  # ==================================================================================
-  # ==================================================================================
-
-
-  #
-  # ==================================================================================
   # Prowlarr: Indexer manager for the other *arr applications, 
   # simplifying the management of torrent trackers and Usenet indexers.
   #
@@ -151,33 +90,33 @@ services:
       - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
 
 
-  # ==================================================================================
-  # Readarr: Book management and automation.
-  #
-  # NOTE: this runs as user hotio (1000) and you cannot override
-  #       and they dont fix it, we have to!
+  # # ==================================================================================
+  # # Readarr: Book management and automation.
+  # #
+  # # NOTE: this runs as user hotio (1000) and you cannot override
+  # #       and they dont fix it, we have to!
 
-  readarr:
-    image: ghcr.io/hotio/readarr:latest
-    container_name: readarr
-    restart: unless-stopped
-    networks:
-      - backend_media
-    environment:
-      - UID=${PUID}
-      - GID=${PGID}
-      - TZ=${TZ}
-    volumes:
-      - '/etc/localtime:/etc/localtime:ro'
-      - '${DOCKER_ROOT}/Stacks/arr-stack/readarr:/config' # Stores Readarr's database and configuration
-      - '${MEDIA_ROOT}:/media'
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=backend_media"
-      - "traefik.http.routers.readarr.rule=Host(`${READARR_HOST}.${DOMAIN}`)"
-      - "traefik.http.routers.readarr.entrypoints=websecure"
-      - "traefik.http.routers.readarr.tls.certresolver=letsencrypt"
-      - "traefik.http.services.readarr.loadbalancer.server.port=8787"
+  # readarr:
+  #   image: ghcr.io/hotio/readarr:latest
+  #   container_name: readarr
+  #   restart: unless-stopped
+  #   networks:
+  #     - backend_media
+  #   environment:
+  #     - UID=${PUID}
+  #     - GID=${PGID}
+  #     - TZ=${TZ}
+  #   volumes:
+  #     - '/etc/localtime:/etc/localtime:ro'
+  #     - '${DOCKER_ROOT}/Stacks/arr-stack/readarr:/config' # Stores Readarr's database and configuration
+  #     - '${MEDIA_ROOT}:/media'
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.docker.network=backend_media"
+  #     - "traefik.http.routers.readarr.rule=Host(`${READARR_HOST}.${DOMAIN}`)"
+  #     - "traefik.http.routers.readarr.entrypoints=websecure"
+  #     - "traefik.http.routers.readarr.tls.certresolver=letsencrypt"
+  #     - "traefik.http.services.readarr.loadbalancer.server.port=8787"
 
   # ==================================================================================
   # Lidarr: Music management and automation.

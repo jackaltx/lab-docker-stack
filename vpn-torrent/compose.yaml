@@ -15,6 +15,7 @@ services:
     image: qmcgaw/gluetun:latest
     container_name: gluetun
     hostname: gluetun  # used by the arr's for reference ??
+    restart: unless-stopped
     networks:
       - backend_media  # <-- On your network so others can reach it
     cap_add:
@@ -57,6 +58,6 @@ services:
       - '${MEDIA_ROOT}/downloads:/downloads'
     depends_on:
       - gluetun
-    restart: always
+    restart: unless-stopped
 
 

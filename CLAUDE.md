@@ -99,7 +99,7 @@ All services route through **Traefik v3.2** with:
 
 **backend_storage** - Infrastructure services (172.20.42.0/24)
 
-- Traefik, MinIO, Arcane, IT-Tools, CyberChef, n8n-dev, n8n (prod)
+- Traefik, MinIO, Arcane, IT-Tools, CyberChef, n8n-dev, n8n (prod), Telegraf
 
 **backend_media** - Media & application services (172.20.43.0/24)
 
